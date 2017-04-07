@@ -36,7 +36,7 @@ class NeuralNetwork:
         x = tf.placeholder(tf.float32, [None, self.input_size])
         feed_forward = tf.nn.softmax(tf.matmul(x, self.hidden_layer) + self.b)
         tf.global_variables_initializer().run()
-        return np.argmax(self.session.run(feed_forward, feed_dict = {x: input_data}))
+        return np.argmax(self.session.run(feed_forward, feed_dict = {x: input_data})[0])
 
 
     def train(self, training_set, learning_rate, epochs):
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     
     training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
     
-    neural_net.train(training_set, 0.5, 5000)
+    neural_net.train(training_set, 0.5, 100)
 
     classified = 0
     correctly_classified = 0
@@ -94,6 +94,7 @@ if __name__ == '__main__':
     for sample in classification_data:
         classified += 1
         guess = neural_net.feed_forward(np.matrix(sample["input"]))
+        print(guess)
         if guess == sample["output"]:
             correctly_classified += 1
 

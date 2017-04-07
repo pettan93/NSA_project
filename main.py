@@ -51,17 +51,15 @@ class NeuralNetwork:
         cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(feed_forward), reduction_indices=[1]))
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
         tf.global_variables_initializer().run()
-        batcher = Batcher(list(zip(training_set[0], training_set[1])))
         for i in range(epochs):
-            training, expected = list(zip(*batcher.next_batch(500)))
-            self.session.run(train_step, feed_dict={x: training, y_: expected})
+            self.session.run(train_step, feed_dict={x: training_set[0], y_: training_set[1]})
 
 
 def image_to_vector(path):
     img = Image.open(path).convert('LA')
     data = [x[0] for x in img.getdata()]
     maximum = max(data) 
-    data = [x / maximum for x in data]
+    data = [(255 - x) / maximum for x in data]
     return data
 
 
@@ -90,7 +88,7 @@ if __name__ == '__main__':
     
     training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
     
-    neural_net.train(training_set, 0.5, 2000)
+    neural_net.train(training_set, 0.5, 400)
 
     classified = 0
     correctly_classified = 0
@@ -103,7 +101,7 @@ if __name__ == '__main__':
 
     print("Úspěšnost %s " % str((correctly_classified / classified) * 100))
 
-    for i in range(5):
+    for i in range(20):
         indx = random.randint(0, len(input_data) - 1)
         fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
         plt.show()

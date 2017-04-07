@@ -33,12 +33,10 @@ class NeuralNetwork:
         :param input_data:  vstupní data o velikosti
         :return: predikce
         """
-        result = None
         x = tf.placeholder(tf.float32, [None, self.input_size])
-        feed_forward = tf.argmax(tf.nn.softmax(tf.matmul(x, self.hidden_layer) + self.b))
+        feed_forward = tf.nn.softmax(tf.matmul(x, self.hidden_layer) + self.b)
         tf.global_variables_initializer().run()
-        with tf.Session() as sess:
-            return sess.run(result, feed_dict = {x: input_data})
+        return np.argmax(self.session.run(feed_forward, feed_dict = {x: input_data}))
 
 
     def train(self, training_set, learning_rate, epochs):
@@ -88,7 +86,7 @@ if __name__ == '__main__':
     
     training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
     
-    neural_net.train(training_set, 0.5, 400)
+    neural_net.train(training_set, 0.5, 5000)
 
     classified = 0
     correctly_classified = 0
@@ -96,7 +94,6 @@ if __name__ == '__main__':
     for sample in classification_data:
         classified += 1
         guess = neural_net.feed_forward(np.matrix(sample["input"]))
-        print(guess)
         if guess == sample["output"]:
             correctly_classified += 1
 
@@ -105,7 +102,7 @@ if __name__ == '__main__':
 
     for i in range(5):
         indx = random.randint(0, len(input_data) - 1)
-        fig = plt.imshow(input_data[indx]["input"].reshape((100, 100)))
+        fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
         plt.show()
         j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"])), input_data[indx]["output"])
         print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))

@@ -35,12 +35,13 @@ class NeuralNetwork:
         """
         result = None
         x = tf.placeholder(tf.float32, [None, self.input_size])
-        feed_forward = tf.nn.softmax(tf.matmul(x, self.hidden_layer) + self.b)
-        return self.session.run(result, feed_dict = {x: input_data})
+        feed_forward = tf.argmax(tf.nn.softmax(tf.matmul(x, self.hidden_layer) + self.b))
+        tf.global_variables_initializer().run()
+        with tf.Session() as sess:
+            return sess.run(result, feed_dict = {x: input_data})
 
 
     def train(self, training_set, learning_rate, epochs):
-        print(training_set[0].shape)
         x = tf.placeholder(tf.float32, [None, self.input_size])
         y_ = tf.placeholder(tf.float32, [None, self.output_size])
         feed_forward = tf.nn.softmax(tf.matmul(x, self.hidden_layer) + self.b)
@@ -83,9 +84,9 @@ if __name__ == '__main__':
 
     random.shuffle(input_data)
     training_set = input_data[:int(len(input_data) * 0.8)]
-    input_matrix = np.matrix([x['input'] for x in training_set])
+    input_matrix = np.array([x['input'] for x in training_set])
     
-    training_set = ((input_matrix), np.matrix([one_hot(x['output'], len(labels)) for x in training_set]))
+    training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
     
     neural_net.train(training_set, 0.5, 400)
 
@@ -94,8 +95,11 @@ if __name__ == '__main__':
     classification_data = input_data[int(len(input_data) * 0.8):]
     for sample in classification_data:
         classified += 1
-        if neural_net.feed_forward(sample["input"]) == sample["output"]:
+        guess = neural_net.feed_forward(np.matrix(sample["input"]))
+        print(guess)
+        if guess == sample["output"]:
             correctly_classified += 1
+
 
     print("Úspěšnost %s " % str((correctly_classified / classified) * 100))
 
@@ -103,5 +107,5 @@ if __name__ == '__main__':
         indx = random.randint(0, len(input_data) - 1)
         fig = plt.imshow(input_data[indx]["input"].reshape((100, 100)))
         plt.show()
-        j, k = (neural_net.feed_forward(input_data[indx]["input"]), input_data[indx]["output"])
+        j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"])), input_data[indx]["output"])
         print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))

@@ -81,6 +81,8 @@ public class CaptchaGenerator {
                     InputStream ex = new FileInputStream(fontPath);
                     this.font = Font.createFont(0, ex);
                 } catch (Exception var2) {
+                    System.err.println("font path - " + this.fontPath );
+                    System.out.println("font path - " + this.fontPath );
                     throw new IllegalStateException();
                 }
             }

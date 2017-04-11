@@ -17,9 +17,6 @@ class Batcher:
 
 
 class NeuralNetwork:
-    """
-    Třívrstvý vícevrsvý perceptron
-    """
     def __init__(self, input_size, output_size):
         self.hidden_layer = tf.Variable(tf.zeros([input_size, output_size]))
         self.b = tf.Variable(tf.zeros([output_size]))
@@ -44,8 +41,15 @@ class NeuralNetwork:
         cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(feed_forward), reduction_indices=[1]))
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
         tf.global_variables_initializer().run()
+        correct_prediction = tf.equal(tf.argmax(y_, 1), tf.argmax(feed_forward, 1))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
         for i in range(epochs):
-            self.session.run(train_step, feed_dict={x: training_set[0], y_: training_set[1]})
+            acc, _ = self.session.run([accuracy, train_step], feed_dict={x: training_set[0], y_: training_set[1]})
+            print("Presnost %s" % (acc * 100))
+            if int(acc * 100) >= 90:
+                break 
+
 
     def __enter__(self):
         return self
@@ -115,7 +119,6 @@ if __name__ == '__main__':
         indx = random.randint(0, len(input_data) - 1)
         j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
         print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
-
-    fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
-    plt.show()
+        fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
+        plt.show()
 

@@ -91,30 +91,31 @@ if __name__ == '__main__':
             })
         class_number += 1
 
-    with NeuralNetwork(100 * 100, len(labels)) as neural_net:
-        random.shuffle(input_data)
-        training_set = input_data[:int(len(input_data) * 0.8)]
-        input_matrix = np.array([x['input'] for x in training_set])
+    neural_net = NeuralNetwork(100 * 100, len(labels))
+    random.shuffle(input_data)
+    training_set = input_data[:int(len(input_data) * 0.8)]
+    input_matrix = np.array([x['input'] for x in training_set])
 
-        training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
+    training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
 
-        neural_net.train(training_set, 0.5, 100)
+    neural_net.train(training_set, 0.5, 100)
 
-        classified = 0
-        correctly_classified = 0
-        classification_data = input_data[int(len(input_data) * 0.1):]
-        for sample in classification_data:
-            classified += 1
-            guess = neural_net.feed_forward(np.matrix(sample["input"]))[0]
-            if guess == sample["output"]:
-                correctly_classified += 1
+    classified = 0
+    correctly_classified = 0
+    classification_data = input_data[int(len(input_data) * 0.1):]
+    for sample in classification_data:
+        classified += 1
+        guess = neural_net.feed_forward(np.matrix(sample["input"]))[0]
+        if guess == sample["output"]:
+            correctly_classified += 1
 
-        print("Úspěšnost %s " % str((correctly_classified / classified) * 100))
+    print("Úspěšnost %s " % str((correctly_classified / classified) * 100))
 
-        for i in range(10):
-            indx = random.randint(0, len(input_data) - 1)
-            j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
-            print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
-            fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
-            plt.show()
+    for i in range(10):
+        indx = random.randint(0, len(input_data) - 1)
+        j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
+        print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
+
+    fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
+    plt.show()
 

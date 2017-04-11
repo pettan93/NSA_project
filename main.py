@@ -6,6 +6,7 @@ import os
 import random
 import matplotlib.pyplot as plt
 
+
 class Batcher:
     def __init__(self, arr):
         self.array = arr
@@ -13,14 +14,6 @@ class Batcher:
     def next_batch(self, size):
         random.shuffle(self.array)
         return self.array[:size]
-
-def sigmoid(x):
-    x = np.clip(x, -500, 500)
-    return 1 / (1 + np.exp(-x))
-
-
-def sigmoid_derivation(x):
-    return np.multiply(x, (1.0 - x))
 
 
 class NeuralNetwork:
@@ -54,6 +47,14 @@ class NeuralNetwork:
         for i in range(epochs):
             self.session.run(train_step, feed_dict={x: training_set[0], y_: training_set[1]})
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("Končím")
+        self.session.close()
+        return False
+
 
 def image_to_vector(path):
     img = Image.open(path).convert('LA')
@@ -80,32 +81,40 @@ if __name__ == '__main__':
             })
         class_number += 1
 
-    neural_net = NeuralNetwork(100 * 100, len(labels))
+    for folder in os.listdir("./resources/output/alphabet/uppercase"):
+        labels.append(folder)
+        for sample in os.listdir("./resources/output/alphabet/uppercase/%s" % folder):
+            input_data.append({
+                "input": image_to_vector("./resources/output/alphabet/uppercase/%s/%s" % (folder, sample)),
+                "output": class_number,
+                "filename": sample
+            })
+        class_number += 1
 
-    random.shuffle(input_data)
-    training_set = input_data[:int(len(input_data) * 0.8)]
-    input_matrix = np.array([x['input'] for x in training_set])
-    
-    training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
-    
-    neural_net.train(training_set, 0.5, 400)
+    with NeuralNetwork(100 * 100, len(labels)) as neural_net:
+        random.shuffle(input_data)
+        training_set = input_data[:int(len(input_data) * 0.8)]
+        input_matrix = np.array([x['input'] for x in training_set])
 
-    classified = 0
-    correctly_classified = 0
-    classification_data = input_data[int(len(input_data) * 0.8):]
-    for sample in classification_data:
-        classified += 1
-        guess = neural_net.feed_forward(np.matrix(sample["input"]))[0]
-        if guess == sample["output"]:
-            correctly_classified += 1
+        training_set = ((input_matrix), np.array([one_hot(x['output'], len(labels)) for x in training_set]))
 
-    print("Úspěšnost %s " % str((correctly_classified / classified) * 100))
+        neural_net.train(training_set, 0.5, 100)
 
-    for i in range(20):
-        indx = random.randint(0, len(input_data) - 1)
-        fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
-        plt.show()
-        j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
-        print(j, k)
-        print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
-    neural_net.session.close()
+        classified = 0
+        correctly_classified = 0
+        classification_data = input_data[int(len(input_data) * 0.1):]
+        for sample in classification_data:
+            classified += 1
+            guess = neural_net.feed_forward(np.matrix(sample["input"]))[0]
+            if guess == sample["output"]:
+                correctly_classified += 1
+
+        print("Úspěšnost %s " % str((correctly_classified / classified) * 100))
+
+        for i in range(10):
+            indx = random.randint(0, len(input_data) - 1)
+            j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
+            print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
+            fig = plt.imshow(np.matrix(input_data[indx]["input"]).reshape((100, 100)))
+            plt.show()
+

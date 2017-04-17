@@ -13,7 +13,7 @@ def image_to_vector(path):
     img = Image.open(path).convert('LA')
     data = [x[0] for x in img.getdata()]
     maximum = max(data) 
-    data = [(255 - x) / maximum for x in data]
+    data = [(255-x) / maximum for x in data]
     return data
 
 
@@ -46,19 +46,21 @@ if __name__ == '__main__':
                 "filename": sample
             })
         class_number += 1
-        if class_number > 2:
+        if class_number > 1:
             break
 
     print("Načetl jsem %s obrázků" % (len(input_data)))
 
-    from ML.MultilayerPerceptron import MultilayerPerceptron
-    with MultilayerPerceptron(100 * 100, len(labels)) as neural_net:
-        random.shuffle(input_data)
-        training_set = input_data[:int(len(input_data) * 0.8)]
-        input_matrix = np.array([x['input'] for x in training_set])
+    random.shuffle(input_data)
+    training_set = input_data[:int(len(input_data) * 0.8)]
+    input_matrix = np.array([x['input'] for x in training_set])
 
-        training_set = (input_matrix, np.array([one_hot(x['output'], len(labels)) for x in training_set]))
-        neural_net.train(training_set, 0.5, 500)
+    training_set = (input_matrix, np.array([one_hot(x['output'], len(labels)) for x in training_set]))
+
+    from ML.MultilayerPerceptron import MultilayerPerceptron
+
+    with MultilayerPerceptron(100 * 100, len(labels)) as neural_net:
+        neural_net.train(training_set, 1e-5, 2000)
 
         classification_data = input_data[int(len(input_data) * 0.1):]
 

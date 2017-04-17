@@ -1,4 +1,5 @@
 import tensorflow as tf
+from ML.Batcher import Batcher
 
 def summary(tensor, name):
     """
@@ -36,17 +37,19 @@ class MultilayerPerceptron:
         :param learning_rate: učící parametr
         :param epochs: počet učících epoch
         """
+        batcher = Batcher(training_set[0], training_set[1])
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
         feed_forward = tf.nn.softmax(tf.matmul(self.input_layer, self.hidden_layer) + self.b, name='predikce')
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(feed_forward), reduction_indices=[1]))
+        cross_entropy = -tf.reduce_sum(y_ * tf.log(feed_forward))
         summary(cross_entropy, "cost_funkce")
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
         all_summaries = tf.summary.merge_all()
         train_writer = tf.summary.FileWriter("./log", self.session.graph)
         tf.global_variables_initializer().run()
         for i in range(epochs):
+            train_data = batcher.next_batch(1000)
             _, all = self.session.run([train_step, all_summaries],
-                                      feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
+                                      feed_dict={self.input_layer: train_data[0], y_: train_data[1]})
             train_writer.add_summary(all, i)
 
     def __enter__(self):

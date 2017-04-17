@@ -46,8 +46,6 @@ if __name__ == '__main__':
                 "filename": sample
             })
         class_number += 1
-        if class_number > 1:
-            break
 
     print("Načetl jsem %s obrázků" % (len(input_data)))
 
@@ -60,7 +58,7 @@ if __name__ == '__main__':
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
     with MultilayerPerceptron(100 * 100, len(labels)) as neural_net:
-        neural_net.train(training_set, 1e-5, 2000)
+        neural_net.train(training_set, 1, 5000)
 
         classification_data = input_data[int(len(input_data) * 0.1):]
 

@@ -42,7 +42,6 @@ class MultilayerPerceptron:
         :param learning_rate: učící parametr
         :param epochs: počet učících epoch
         """
-        saver = tf.train.Saver()
         batcher = Batcher(training_set[0], training_set[1])
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
         feed_forward = tf.nn.softmax(tf.matmul(self.input_layer, self.hidden_layer) + self.b, name='predikce')
@@ -51,6 +50,7 @@ class MultilayerPerceptron:
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
         all_summaries = tf.summary.merge_all()
         train_writer = tf.summary.FileWriter("./log/%s" % current_time(), self.session.graph)
+        saver = tf.train.Saver()
         tf.global_variables_initializer().run()
         for i in range(epochs):
             train_data = batcher.next_batch(100)

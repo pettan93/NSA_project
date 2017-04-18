@@ -46,7 +46,7 @@ if __name__ == '__main__':
                 "filename": sample
             })
         class_number += 1
-        if class_number > 1:
+        if class_number == 1:
             break
 
     print("Načetl jsem %s obrázků" % (len(input_data)))
@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     with MultilayerPerceptron(100 * 100, len(labels)) as neural_net:
         neural_net.train(training_set, 1, 5000)
+        #neural_net.load("./save/2017-04_12_23_34/model.ckpt")
 
         classification_data = input_data[int(len(input_data) * 0.1):]
 

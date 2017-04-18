@@ -42,6 +42,7 @@ class MultilayerPerceptron:
         :param learning_rate: učící parametr
         :param epochs: počet učících epoch
         """
+        saver = tf.train.Saver()
         batcher = Batcher(training_set[0], training_set[1])
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
         feed_forward = tf.nn.softmax(tf.matmul(self.input_layer, self.hidden_layer) + self.b, name='predikce')
@@ -52,10 +53,18 @@ class MultilayerPerceptron:
         train_writer = tf.summary.FileWriter("./log/%s" % current_time(), self.session.graph)
         tf.global_variables_initializer().run()
         for i in range(epochs):
-            train_data = batcher.next_batch(1000)
+            train_data = batcher.next_batch(100)
             _, all = self.session.run([train_step, all_summaries],
                                       feed_dict={self.input_layer: train_data[0], y_: train_data[1]})
             train_writer.add_summary(all, i)
+        import os
+        time_stamp = current_time()
+        os.mkdir("./save/%s" % time_stamp)
+        saver.save(self.session, "./save/%s/model.ckpt" % time_stamp)
+
+    def load(self, path):
+        saver = tf.train.Saver()
+        saver.restore(self.session, path)
 
     def __enter__(self):
         return self

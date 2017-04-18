@@ -40,7 +40,7 @@ class MultilayerPerceptron:
         batcher = Batcher(training_set[0], training_set[1])
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
         feed_forward = tf.nn.softmax(tf.matmul(self.input_layer, self.hidden_layer) + self.b, name='predikce')
-        cross_entropy = -tf.reduce_sum(y_ * tf.log(feed_forward))
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
         summary(cross_entropy, "cost_funkce")
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
         all_summaries = tf.summary.merge_all()

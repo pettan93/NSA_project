@@ -46,6 +46,8 @@ if __name__ == '__main__':
                 "filename": sample
             })
         class_number += 1
+        if class_number > 1:
+            break
 
     print("Načetl jsem %s obrázků" % (len(input_data)))
 

@@ -9,6 +9,11 @@ def summary(tensor, name):
     tf.summary.scalar(name, tensor)
 
 
+def current_time():
+    from datetime import datetime
+    return datetime.now().strftime("%Y-%m_%H_%M_%S")
+
+
 class MultilayerPerceptron:
     """
     Třívrstvý vícevrsvý perceptron
@@ -44,7 +49,7 @@ class MultilayerPerceptron:
         summary(cross_entropy, "cost_funkce")
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
         all_summaries = tf.summary.merge_all()
-        train_writer = tf.summary.FileWriter("./log", self.session.graph)
+        train_writer = tf.summary.FileWriter("./log/%s" % current_time(), self.session.graph)
         tf.global_variables_initializer().run()
         for i in range(epochs):
             train_data = batcher.next_batch(1000)

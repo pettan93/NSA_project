@@ -32,41 +32,49 @@ def one_hot(x, max_size):
     """
     return [int(i == x) for i in range(max_size)]
 
+def prepare_for_neural_network(data):
+    """
+    Připraví data pro neuronovou síť
+    :param data: Data pro neuronovou síť
+    :return: 
+    """
+    input_matrix = np.array([x['input'] for x in data])
+    return (input_matrix, np.array([one_hot(x['output'], len(labels)) for x in data]))
+
 if __name__ == '__main__':
     input_data = []
     labels = []
     class_number = 0
     print("Načítám data")
-    for folder in os.listdir("./resources/output/alphabet/lowercase"):
-        labels.append(folder)
-        for sample in os.listdir("./resources/output/alphabet/lowercase/%s" % folder):
-            input_data.append({
-                "input": image_to_vector("./resources/output/alphabet/lowercase/%s/%s" % (folder, sample)),
-                "output": class_number,
-                "filename": sample
-            })
-        class_number += 1
-        if class_number == 1:
-            break
+    for size in ["lowercase", "uppercase"]:
+        for folder in os.listdir("./resources/output/alphabet/%s" % size):
+            labels.append(folder)
+            for sample in os.listdir("./resources/output/alphabet/%s/%s" % (size, folder)):
+                input_data.append({
+                    "input": image_to_vector("./resources/output/alphabet/%s/%s/%s" % (size, folder, sample)),
+                    "output": class_number,
+                    "filename": sample
+                })
+            class_number += 1
 
     print("Načetl jsem %s obrázků" % (len(input_data)))
 
     random.shuffle(input_data)
     training_set = input_data[:int(len(input_data) * 0.8)]
-    input_matrix = np.array([x['input'] for x in training_set])
-
-    training_set = (input_matrix, np.array([one_hot(x['output'], len(labels)) for x in training_set]))
+    training_set = prepare_for_neural_network(training_set)
 
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
-    with MultilayerPerceptron(100 * 100, len(labels)) as neural_net:
-        neural_net.train(training_set, 1, 5000)
-        #neural_net.load("./save/2017-04_12_23_34/model.ckpt")
+    with MultilayerPerceptron(100 * 100, 1000, len(labels)) as neural_net:
+        neural_net.train(training_set, 1e-2, 1000)
+        #neural_net.load("./2017-04_21_07_55/model.ckpt")
 
-        classification_data = input_data[int(len(input_data) * 0.1):]
+        classification_data = input_data[int(len(input_data) * 0.2):]
+        classification_data = prepare_for_neural_network(classification_data)
+        print("Přesnost na klasifikačních datech %s" % neural_net.accuracy(classification_data))
+        print("Přesnost na trénovacích datech %s" % neural_net.accuracy(training_set))
 
         for i in range(10):
             indx = random.randint(0, len(input_data) - 1)
             j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
             print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
-

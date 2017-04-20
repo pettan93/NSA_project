@@ -57,20 +57,33 @@ if __name__ == '__main__':
                 })
             class_number += 1
 
-    print("Načetl jsem %s obrázků" % (len(input_data)))
+    for size in ["lowercase", "uppercase"]:
+        for folder in os.listdir("./resources/output/alphabet_2/%s" % size):
+            labels.append(folder)
+            for sample in os.listdir("./resources/output/alphabet_2/%s/%s" % (size, folder)):
+                input_data.append({
+                    "input": image_to_vector("./resources/output/alphabet_2/%s/%s/%s" % (size, folder, sample)),
+                    "output": class_number,
+                    "filename": sample
+                })
+            class_number += 1
 
+    print("Načetl jsem %s obrázků" % (len(input_data)))
+    print("Počet labelů %s" % (len(labels)))
+    print(labels)
     random.shuffle(input_data)
-    training_set = input_data[:int(len(input_data) * 0.8)]
+    training_set = input_data[:int(len(input_data) * 0.9)]
     training_set = prepare_for_neural_network(training_set)
+
+    classification_data = input_data[int(len(input_data) * 0.1):]
+    classification_data = prepare_for_neural_network(classification_data)
 
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
-    with MultilayerPerceptron(100 * 100, 1000, len(labels)) as neural_net:
-        neural_net.train(training_set, 1e-2, 1000)
+    with MultilayerPerceptron(100 * 100, 400, len(labels)) as neural_net:
+        neural_net.train(training_set, 1e-2, classification_data, 300)
         #neural_net.load("./2017-04_21_07_55/model.ckpt")
 
-        classification_data = input_data[int(len(input_data) * 0.2):]
-        classification_data = prepare_for_neural_network(classification_data)
         print("Přesnost na klasifikačních datech %s" % neural_net.accuracy(classification_data))
         print("Přesnost na trénovacích datech %s" % neural_net.accuracy(training_set))
 

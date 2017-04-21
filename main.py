@@ -81,7 +81,7 @@ if __name__ == '__main__':
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
     with MultilayerPerceptron(100 * 100, 400, len(labels)) as neural_net:
-        neural_net.train(training_set, 1e-2, classification_data, 300)
+        neural_net.train(training_set, 1e-2, classification_data, 400)
         #neural_net.load("./2017-04_21_07_55/model.ckpt")
 
         print("Přesnost na klasifikačních datech %s" % neural_net.accuracy(classification_data))

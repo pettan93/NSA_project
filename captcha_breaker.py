@@ -1,5 +1,5 @@
 from ML.MultilayerPerceptron import MultilayerPerceptron
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 
 
@@ -26,23 +26,17 @@ class Box:
         self.h_y = self.y + self.height
 
 
-import matplotlib.pyplot as plt
-
-
 def break_captcha(path):
     image = Image.open(path)
-    box = Box(5, 0, 50, 60)
+    box = Box(5, 5, 50, 50)
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'A', 'B']
     neural_network = MultilayerPerceptron(100 * 100, 400, len(labels))
-    neural_network.load("./2017-04_22_03_09/model.ckpt")
+    neural_network.load("./96_100x100_400_54/model.ckpt")
     while box.w_x < image.size[0]:
-        img_data = image.crop(box.tuple()).resize((100, 100))
+        img_data = ImageOps.invert(image.crop(box.tuple()).resize((100, 100))).convert("LA")
         data = [x[0] for x in img_data.getdata()]
 
-        maximum = max(data)
-        data = np.matrix([(255 - x) / 255 for x in data])
-        plt.imshow(data.reshape((100, 100)))
-        plt.show()
+        data = np.matrix([x / 255 for x in data])
         indx = neural_network.feed_forward(data)
         print(labels[indx[0]], end=" ")
         box.x += 60

@@ -39,7 +39,7 @@ class MultilayerPerceptron:
         prediction = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         return self.session.run(tf.argmax(prediction, 1), feed_dict={self.input_layer: input_data})
 
-    def train(self, training_set, learning_rate, test_data, epochs):
+    def train(self, training_set, learning_rate, validation_data, epochs):
         """
         Trénování neuronové sítě
         :param training_set: trénovací množina
@@ -54,13 +54,19 @@ class MultilayerPerceptron:
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
         train_writer = tf.summary.FileWriter("./log/%s" % current_time(), self.session.graph)
         saver = tf.train.Saver()
-        accuracy = self.accuracy_tensor(test_data)
-        summary(accuracy, "presnost")
+        accuracy = self.accuracy_tensor(validation_data)
+        summary(accuracy, "Validace")
         all_summaries = tf.summary.merge_all()
         tf.global_variables_initializer().run()
+        batcher = Batcher(training_set[0], training_set[1])
         for i in range(epochs):
-            _, all = self.session.run([train_step, all_summaries],
+            training_set = batcher.next_batch(100)
+            _, all, validation_acc = self.session.run([train_step, all_summaries, accuracy],
                                       feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
+
+            if validation_acc >= 98:
+                break
+
             train_writer.add_summary(all, i)
         import os
         time_stamp = current_time()
@@ -69,7 +75,8 @@ class MultilayerPerceptron:
         saver.save(self.session, os.path.join(path, "model.ckpt"))
 
     def accuracy_tensor(self, test_data):
-        hidden_layer = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
+        input_layer = tf.constant(test_data[0])
+        hidden_layer = tf.nn.relu(tf.add(tf.matmul(input_layer, self.hidden_layer), self.bias_1))
         prediction = tf.add(tf.matmul(hidden_layer, self.output_layer), self.bias_2)
         feed = tf.argmax(prediction, 1)
         comparsion_data = tf.constant(test_data[1])

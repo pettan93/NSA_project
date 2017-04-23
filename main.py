@@ -12,8 +12,7 @@ def image_to_vector(path):
     """
     img = Image.open(path).convert('LA')
     data = [x[0] for x in img.getdata()]
-    maximum = max(data) 
-    data = [(255-x) / maximum for x in data]
+    data = [(255 - x) / 255 for x in data]
     return data
 
 
@@ -32,14 +31,24 @@ def one_hot(x, max_size):
     """
     return [int(i == x) for i in range(max_size)]
 
+
 def prepare_for_neural_network(data):
     """
     Připraví data pro neuronovou síť
     :param data: Data pro neuronovou síť
     :return: 
     """
-    input_matrix = np.array([x['input'] for x in data])
+    input_matrix = np.array([x['input'] for x in data], dtype=np.float32)
     return (input_matrix, np.array([one_hot(x['output'], len(labels)) for x in data]))
+
+
+def split(input_data, train, test):
+    training_set = input_data[:int(len(input_data) * train)]
+    rest = input_data[int(len(input_data) * train):]
+    test_set = rest[:int(len(rest) * test) ]
+    validation_set = rest[int(len(rest) * test):]
+    return training_set, validation_set, test_set
+
 
 if __name__ == '__main__':
     input_data = []
@@ -57,35 +66,23 @@ if __name__ == '__main__':
                 })
             class_number += 1
 
-    for size in ["lowercase", "uppercase"]:
-        for folder in os.listdir("./resources/output/alphabet_2/%s" % size):
-            labels.append(folder)
-            for sample in os.listdir("./resources/output/alphabet_2/%s/%s" % (size, folder)):
-                input_data.append({
-                    "input": image_to_vector("./resources/output/alphabet_2/%s/%s/%s" % (size, folder, sample)),
-                    "output": class_number,
-                    "filename": sample
-                })
-            class_number += 1
-
     print("Načetl jsem %s obrázků" % (len(input_data)))
     print("Počet labelů %s" % (len(labels)))
     print(labels)
     random.shuffle(input_data)
-    training_set = input_data[:int(len(input_data) * 0.9)]
-    training_set = prepare_for_neural_network(training_set)
-
-    classification_data = input_data[int(len(input_data) * 0.1):]
-    classification_data = prepare_for_neural_network(classification_data)
+    train, validation, test = split(input_data, 80 / 100, 30 / 100)
+    train = prepare_for_neural_network(train)
+    validation = prepare_for_neural_network(validation)
+    test = prepare_for_neural_network(test)
 
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
-    with MultilayerPerceptron(100 * 100, 400, len(labels)) as neural_net:
-        neural_net.train(training_set, 1e-2, classification_data, 400)
+    with MultilayerPerceptron(100 * 100, 450, len(labels)) as neural_net:
+        neural_net.train(train, 1e-2, validation, 10000)
         #neural_net.load("./2017-04_21_07_55/model.ckpt")
 
-        print("Přesnost na klasifikačních datech %s" % neural_net.accuracy(classification_data))
-        print("Přesnost na trénovacích datech %s" % neural_net.accuracy(training_set))
+        print("Přesnost na testovacích datech %s" % neural_net.accuracy(test))
+        print("Přesnost na trénovacích datech %s" % neural_net.accuracy(train))
 
         for i in range(10):
             indx = random.randint(0, len(input_data) - 1)

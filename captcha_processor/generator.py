@@ -43,36 +43,36 @@ def generate_captcha(text, output_path, settings_dict=None):
 
 def traning_data_alphabet(samples_per_letter, settings):
     # for index, char in enumerate(string.ascii_lowercase):
-    for index, char in enumerate(("a", "b")):
+    for index, char in enumerate(string.ascii_lowercase):
         print("Generating letter '" + char + "' [" + str(index + 1) + "/" + str(len(string.ascii_lowercase)) + "]")
 
         cap_char = char.capitalize()
 
-        lowercase_dir = RESOURCES_DIR_PATH + "output/alphabet_2/lowercase/" + char
+        lowercase_dir = RESOURCES_DIR_PATH + "output/alphabet_3/lowercase/" + char
         if os.path.exists(lowercase_dir):
             shutil.rmtree(lowercase_dir)
         os.makedirs(lowercase_dir)
         for i in range(samples_per_letter):
             print(" - lowercase image [" + str(i + 1) + "/" + str(samples_per_letter) + "]")
 
-            if bool(random.getrandbits(1)):
-                settings["font"] = "pricedown.ttf"
-            else:
-                settings["font"] = "boxpot.ttf"
+            # if bool(random.getrandbits(1)):
+            #     settings["font"] = "pricedown.ttf"
+            # else:
+            #     settings["font"] = "boxpot.ttf"
 
             generate_captcha(char, lowercase_dir + "/" + str(i + 1) + ".png", settings)
 
-        uppercase_dir = RESOURCES_DIR_PATH + "output/alphabet_2/uppercase/" + cap_char
+        uppercase_dir = RESOURCES_DIR_PATH + "output/alphabet_3/uppercase/" + cap_char
         if os.path.exists(uppercase_dir):
             shutil.rmtree(uppercase_dir)
         os.makedirs(uppercase_dir)
         for i in range(samples_per_letter):
             print(" - uppercase image [" + str(i + 1) + "/" + str(samples_per_letter) + "]")
 
-            if bool(random.getrandbits(1)):
-                settings["font"] = "pricedown.ttf"
-            else:
-                settings["font"] = "boxpot.ttf"
+            # if bool(random.getrandbits(1)):
+            #     settings["font"] = "pricedown.ttf"
+            # else:
+            #     settings["font"] = "boxpot.ttf"
 
             generate_captcha(cap_char, uppercase_dir + "/" + str(i + 1) + ".png", settings)
 
@@ -84,8 +84,13 @@ def traning_data_alphabet(samples_per_letter, settings):
 
 # traning_data_alphabet(100, {"height": "100", "width": "100"})
 
-# generate_captcha("bard", "out1.png", {"font": "boxpot.ttf"})
-#
+generate_captcha("\"abcdefghijklmnopqrstuvwxyz\"", "captcha7.png", {"font": "boxpot.ttf",
+                                                 # "showGrid": "True",
+                                                 "height": "32",
+                                                 # "width": "1000",
+                                                 "fontSize": "30"})
+                                                 # "scaleAmplitude": "70")
+# #
 # generate_captcha("bard", "out2.png", {"font": "pricedown.ttf"})
 
-traning_data_alphabet(100, {"height": "100", "width": "100", "font": "boxpot.ttf"})
+# traning_data_alphabet(1000, {"height": "32", "width": "32", "font": "boxpot.ttf", "fontSize": "30"})

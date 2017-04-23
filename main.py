@@ -4,6 +4,16 @@ import os
 import random
 
 
+def remove_borders(matrix, tol = 200):
+    mask = matrix < tol
+    coords = np.argwhere(mask)
+    if coords.size == 0:
+        return None
+    x0, y0 = coords.min(axis=0)
+    x1, y1 = coords.max(axis=0) + 1
+    return matrix[x0:x1, y0:y1]
+
+
 def image_to_vector(path):
     """
     Převede obrázek na vektor o velikosti vyska*sirka.
@@ -12,7 +22,10 @@ def image_to_vector(path):
     """
     img = Image.open(path).convert('LA')
     data = [x[0] for x in img.getdata()]
-    data = [(255 - x) / 255 for x in data]
+    data = remove_borders(np.matrix(data).reshape((32, 32)))
+    data_img = Image.fromarray(data)
+    data_img = data_img.resize((32, 32)).convert("LA")
+    data = [(255 - x[0]) / 255 for x in data_img.getdata()]
     return data
 
 
@@ -45,7 +58,7 @@ def prepare_for_neural_network(data):
 def split(input_data, train, test):
     training_set = input_data[:int(len(input_data) * train)]
     rest = input_data[int(len(input_data) * train):]
-    test_set = rest[:int(len(rest) * test) ]
+    test_set = rest[:int(len(rest) * test)]
     validation_set = rest[int(len(rest) * test):]
     return training_set, validation_set, test_set
 
@@ -56,11 +69,11 @@ if __name__ == '__main__':
     class_number = 0
     print("Načítám data")
     for size in ["lowercase", "uppercase"]:
-        for folder in os.listdir("./resources/output/alphabet/%s" % size):
+        for folder in os.listdir("./resources/output/alphabet_3/%s" % size):
             labels.append(folder)
-            for sample in os.listdir("./resources/output/alphabet/%s/%s" % (size, folder)):
+            for sample in os.listdir("./resources/output/alphabet_3/%s/%s" % (size, folder)):
                 input_data.append({
-                    "input": image_to_vector("./resources/output/alphabet/%s/%s/%s" % (size, folder, sample)),
+                    "input": image_to_vector("./resources/output/alphabet_3/%s/%s/%s" % (size, folder, sample)),
                     "output": class_number,
                     "filename": sample
                 })
@@ -70,16 +83,16 @@ if __name__ == '__main__':
     print("Počet labelů %s" % (len(labels)))
     print(labels)
     random.shuffle(input_data)
-    train, validation, test = split(input_data, 80 / 100, 30 / 100)
+    train, validation, test = split(input_data, 70 / 100, 50 / 100)
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
-    with MultilayerPerceptron(100 * 100, 450, len(labels)) as neural_net:
+    with MultilayerPerceptron(32 * 32, 50, len(labels)) as neural_net:
         neural_net.train(train, 1e-2, validation, 10000)
-        #neural_net.load("./2017-04_21_07_55/model.ckpt")
+        # neural_net.load("./2017-04_20_23_09/model.ckpt")
 
         print("Přesnost na testovacích datech %s" % neural_net.accuracy(test))
         print("Přesnost na trénovacích datech %s" % neural_net.accuracy(train))

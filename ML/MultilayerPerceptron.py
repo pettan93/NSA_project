@@ -60,11 +60,11 @@ class MultilayerPerceptron:
         tf.global_variables_initializer().run()
         batcher = Batcher(training_set[0], training_set[1])
         for i in range(epochs):
-            training_set = batcher.next_batch(100)
+            training_set = batcher.next_batch(500)
             _, all, validation_acc = self.session.run([train_step, all_summaries, accuracy],
                                       feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
 
-            if validation_acc >= 98:
+            if validation_acc >= 99:
                 break
 
             train_writer.add_summary(all, i)

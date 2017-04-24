@@ -64,7 +64,7 @@ class MultilayerPerceptron:
             _, all, validation_acc = self.session.run([train_step, all_summaries, accuracy],
                                       feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
 
-            if validation_acc >= 99:
+            if validation_acc >= 99.5:
                 break
 
             train_writer.add_summary(all, i)

@@ -1,6 +1,6 @@
 from ML.MultilayerPerceptron import MultilayerPerceptron
 from PIL import Image, ImageOps
-from skimage.feature import corner_harris, corner_subpix, corner_peaks
+#from skimage.feature import corner_harris, corner_subpix, corner_peaks
 import numpy as np
 
 
@@ -26,7 +26,7 @@ class Box:
         self.y += 1
         self.h_y = self.y + self.height
 
-def remove_borders(matrix, tol = 150):
+def remove_borders(matrix, tol = 200):
     mask = matrix < tol
     coords = np.argwhere(mask)
     if coords.size == 0:
@@ -50,16 +50,19 @@ def break_captcha(path):
             if matrix is None:
                 box.x += 20
                 continue
-            data_img = Image.fromarray(matrix)
+            array = np.asarray(matrix, dtype=np.uint8)
+            data_img = Image.fromarray(array)
             if data_img.size[0] < 10 or data_img.size[1] < 10:
                 box.x += 20
                 continue
-            data_img = data_img.resize((32, 32)).convert("LA")
-            data = np.matrix([(255 - x[0]) / 255 for x in data_img.getdata()])
+            data_img = ImageOps.invert(data_img).resize((32, 32)).convert("LA")
+            data_img.show()
+            data = np.matrix([x[0] / 255 for x in data_img.getdata()])
             indx = neural_network.feed_forward(data)
-            print(labels[indx[0]], end="")
+            print(labels[indx[0]])
             box.x += 20
+            input("enter pro další znak")
 
 
 if __name__ == '__main__':
-    break_captcha("resources/output/captcha5.png")
+    break_captcha("resources/output/captcha1.png")

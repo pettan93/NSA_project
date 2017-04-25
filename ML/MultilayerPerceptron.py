@@ -21,11 +21,16 @@ class MultilayerPerceptron:
     """
     def __init__(self, input_size, number_of_neurons, output_size):
         self.input_size = input_size
+        # Vstupní vrstva velikost x * input_size
         self.input_layer = tf.placeholder(tf.float32, [None, self.input_size])
+        # Skrytá vrstva náhodně inicializovaná náhodně input_size * number_of_neurons
         self.hidden_layer = tf.Variable(tf.random_normal([self.input_size, number_of_neurons]), name='skryta_vrstva')
         self.output_size = output_size
+        # Výstupní vrstva (ta kterou to proženu, abych měl výstup v určitém formátu) náhodně inicializovaná number_of_neurons * output_size (počet tříd do kterých klasifikujeme)
         self.output_layer = tf.Variable(tf.random_normal([number_of_neurons, self.output_size]))
+        # Bias pro skrytou vrstvu
         self.bias_1 = tf.Variable(tf.random_normal([number_of_neurons]))
+        # Bias pro výstupní vrstvu
         self.bias_2 = tf.Variable(tf.random_normal([output_size]))
         self.session = tf.InteractiveSession()
 
@@ -35,8 +40,11 @@ class MultilayerPerceptron:
         :param input_data:  vstupní data o velikosti
         :return: predikce
         """
+        # Výstup ze skryté vrstvy relu(input_layer * hidden_layer + bias)
         hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
+        # Výstup neuronky hidden_output * output_layer + bias_2
         prediction = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
+        # Vrátí index největší hodnoty z výstupu
         return self.session.run(tf.argmax(prediction, 1), feed_dict={self.input_layer: input_data})
 
     def train(self, training_set, learning_rate, validation_data, epochs):
@@ -46,19 +54,28 @@ class MultilayerPerceptron:
         :param learning_rate: učící parametr
         :param epochs: počet učících epoch
         """
+        # Data, která má neuronka předpovídat
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
+        # Feed forward
         hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
+        # Konec feed forwardu máme předpověď
+        # Naše cost funkce  
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        # Zobrazím si cost funkci jako graf
         summary(cross_entropy, "cost_funkce")
+        # Samotná učení na jeden řádek řeknu dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
         train_writer = tf.summary.FileWriter("./log/%s" % current_time(), self.session.graph)
         saver = tf.train.Saver()
+        # Přesnost na validačních datech
         accuracy = self.accuracy_tensor(validation_data)
         summary(accuracy, "Validace")
         all_summaries = tf.summary.merge_all()
         tf.global_variables_initializer().run()
+        # Batcher vrací náhodně promíchané vzorky
         batcher = Batcher(training_set[0], training_set[1])
+        # Neuronku učíme po x epoch
         for i in range(epochs):
             training_set = batcher.next_batch(500)
             _, all, validation_acc = self.session.run([train_step, all_summaries, accuracy],
@@ -75,6 +92,9 @@ class MultilayerPerceptron:
         saver.save(self.session, os.path.join(path, "model.ckpt"))
 
     def accuracy_tensor(self, test_data):
+        """
+        Vrátí tensor, který dává přesnost vstupních dat po prohnání neuronkou
+        """
         input_layer = tf.constant(test_data[0])
         hidden_layer = tf.nn.relu(tf.add(tf.matmul(input_layer, self.hidden_layer), self.bias_1))
         prediction = tf.add(tf.matmul(hidden_layer, self.output_layer), self.bias_2)

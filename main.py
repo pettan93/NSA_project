@@ -63,6 +63,20 @@ def split(input_data, train, test):
     return training_set, validation_set, test_set
 
 
+def bias_variance_plot(max_neurons, input_size, output_size, train, validation, test):
+    from ML.MultilayerPerceptron import MultilayerPerceptron
+    import matplotlib.pyplot as plt
+    error_history = []
+    plt.ion()
+    plt.ylabel("Chyba")
+    plt.xlabel("Počet neuronů")
+    for number_of_neurons in range(50, max_neurons + 1):
+        with MultilayerPerceptron(input_size, number_of_neurons, output_size) as neural_net:
+            neural_net.train(train, 1e-2, validation, 10000)
+            error_history.append(100 - neural_net.accuracy(test))
+            plt.plot(error_history, 'r-')
+            plt.pause(0.00001)
+
 if __name__ == '__main__':
     input_data = []
     labels = []
@@ -83,13 +97,12 @@ if __name__ == '__main__':
     print("Počet labelů %s" % (len(labels)))
     print(labels)
     random.shuffle(input_data)
-    train, validation, test = split(input_data, 70 / 100, 50 / 100)
+    train, validation, test = split(input_data, 60 / 100, 50 / 100)
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
-
-    from ML.MultilayerPerceptron import MultilayerPerceptron
-
+    bias_variance_plot(200, 32 * 32, len(labels), train, validation, test)
+    """
     with MultilayerPerceptron(32 * 32, 50, len(labels)) as neural_net:
         neural_net.train(train, 1e-2, validation, 100000)
         # neural_net.load("./2017-04_20_23_09/model.ckpt")
@@ -101,3 +114,4 @@ if __name__ == '__main__':
             indx = random.randint(0, len(input_data) - 1)
             j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
             print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
+    """

@@ -1,4 +1,5 @@
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from ML.Batcher import Batcher
 
 def summary(tensor, name):
@@ -19,20 +20,25 @@ class MultilayerPerceptron:
     """
     Třívrstvý vícevrsvý perceptron
     """
-    def __init__(self, input_size, number_of_neurons, output_size):
+
+    def __init__(self, input_size, number_of_neurons, output_size, session = None):
         self.input_size = input_size
         # Vstupní vrstva velikost x * input_size
-        self.input_layer = tf.placeholder(tf.float32, [None, self.input_size])
-        # Skrytá vrstva náhodně inicializovaná náhodně input_size * number_of_neurons
-        self.hidden_layer = tf.Variable(tf.random_normal([self.input_size, number_of_neurons]), name='skryta_vrstva')
-        self.output_size = output_size
-        # Výstupní vrstva (ta kterou to proženu, abych měl výstup v určitém formátu) náhodně inicializovaná number_of_neurons * output_size (počet tříd do kterých klasifikujeme)
-        self.output_layer = tf.Variable(tf.random_normal([number_of_neurons, self.output_size]))
-        # Bias pro skrytou vrstvu
-        self.bias_1 = tf.Variable(tf.random_normal([number_of_neurons]))
-        # Bias pro výstupní vrstvu
-        self.bias_2 = tf.Variable(tf.random_normal([output_size]))
-        self.session = tf.InteractiveSession()
+        with tf.name_scope("neuronka"):
+            self.input_layer = tf.placeholder(tf.float32, [None, self.input_size])
+            # Skrytá vrstva náhodně inicializovaná náhodně input_size * number_of_neurons
+            self.hidden_layer = tf.Variable(tf.random_normal([self.input_size, number_of_neurons]), name='skryta_vrstva')
+            self.output_size = output_size
+            # Výstupní vrstva (ta kterou to proženu, abych měl výstup v určitém formátu) náhodně inicializovaná number_of_neurons * output_size (počet tříd do kterých klasifikujeme)
+            self.output_layer = tf.Variable(tf.random_normal([number_of_neurons, self.output_size]))
+            # Bias pro skrytou vrstvu
+            self.bias_1 = tf.Variable(tf.random_normal([number_of_neurons]))
+            # Bias pro výstupní vrstvu
+            self.bias_2 = tf.Variable(tf.random_normal([output_size]))
+        if session is None:
+            self.session = tf.InteractiveSession()
+        else:
+            self.session = session
 
     def feed_forward(self, input_data):
         """
@@ -47,6 +53,15 @@ class MultilayerPerceptron:
         # Vrátí index největší hodnoty z výstupu
         return self.session.run(tf.argmax(prediction, 1), feed_dict={self.input_layer: input_data})
 
+    def j(self, input_data, y_data):
+        y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
+        hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
+        feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
+        # Konec feed forwardu máme předpověď
+        # Naše cost funkce
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        return self.session.run(cross_entropy, feed_dict={self.input_layer: input_data, y_: y_data})
+
     def train(self, training_set, learning_rate, validation_data, epochs):
         """
         Trénování neuronové sítě
@@ -60,36 +75,26 @@ class MultilayerPerceptron:
         hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
-        # Naše cost funkce  
+        # Naše cost funkce
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
-        # Zobrazím si cost funkci jako graf
-        summary(cross_entropy, "cost_funkce")
         # Samotná učení na jeden řádek řeknu dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
-        train_writer = tf.summary.FileWriter("./log/%s" % current_time(), self.session.graph)
         saver = tf.train.Saver()
         # Přesnost na validačních datech
-        accuracy = self.accuracy_tensor(validation_data)
-        summary(accuracy, "Validace")
-        all_summaries = tf.summary.merge_all()
         tf.global_variables_initializer().run()
         # Batcher vrací náhodně promíchané vzorky
         batcher = Batcher(training_set[0], training_set[1])
         # Neuronku učíme po x epoch
         for i in range(epochs):
-            training_set = batcher.next_batch(500)
-            _, all, validation_acc = self.session.run([train_step, all_summaries, accuracy],
-                                      feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
-
-            if validation_acc >= 99.5:
-                break
-
-            train_writer.add_summary(all, i)
+            training_set = batcher.next_batch(len(training_set))
+            _ = self.session.run([train_step], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
+        """
         import os
         time_stamp = current_time()
         path = os.path.join(os.getcwd(), time_stamp)
         os.mkdir(path)
         saver.save(self.session, os.path.join(path, "model.ckpt"))
+        """
 
     def accuracy_tensor(self, test_data):
         """

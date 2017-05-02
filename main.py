@@ -20,12 +20,12 @@ def image_to_vector(path):
     :param path: cesta k obrázku
     :return: 
     """
-    img = Image.open(path).convert('LA')
-    data = [x[0] for x in img.getdata()]
-    data = remove_borders(np.matrix(data).reshape((32, 32)))
+    img = Image.open(path).convert('L')
+    data = np.array(img)
+    data = remove_borders(data)
     data_img = Image.fromarray(data)
-    data_img = data_img.resize((32, 32)).convert("LA")
-    data = [(255 - x[0]) / 255 for x in data_img.getdata()]
+    data_img = data_img.resize((32, 32))
+    data = [(255 - x) / 255 for x in data_img.getdata()]
     return data
 
 
@@ -63,19 +63,33 @@ def split(input_data, train, test):
     return training_set, validation_set, test_set
 
 
-def bias_variance_plot(max_neurons, input_size, output_size, train, validation, test):
+def bias_variance_plot(input_size, output_size, train, validation, test):
     from ML.MultilayerPerceptron import MultilayerPerceptron
+    from ML import Batcher
     import matplotlib.pyplot as plt
-    error_history = []
+    import matplotlib.patches as mpatches
+    j_train_label = mpatches.Patch(color='red', label='$j_{trenovaci}$')
+    j_validation_label=mpatches.Patch(color='blue', label='$j_{validace}$')
     plt.ion()
-    plt.ylabel("Chyba")
-    plt.xlabel("Počet neuronů")
-    for number_of_neurons in range(50, max_neurons + 1):
-        with MultilayerPerceptron(input_size, number_of_neurons, output_size) as neural_net:
-            neural_net.train(train, 1e-2, validation, 10000)
-            error_history.append(100 - neural_net.accuracy(test))
-            plt.plot(error_history, 'r-')
+    plt.ylabel("J($\\theta$)")
+    plt.xlabel("Pocet vzorku")
+    plt.legend(handles=[j_train_label, j_validation_label])
+
+    j_train = []
+    j_validation = []
+    train_set = train
+    batcher = Batcher.Batcher(train[0], train[1])
+    for training_percentage in range(10, 101, 5):
+        with MultilayerPerceptron(input_size, 200, output_size) as neural_net:
+            train = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
+            neural_net.train(train, 1e-2, validation, 1000)
+            j_train.append(neural_net.j(train[0], train[1]))
+            j_validation.append(neural_net.j(validation[0], validation[1]))
+            x_axis = list(range(len(j_train)))
+            plt.plot(x_axis, j_train, 'r-', x_axis, j_validation, 'b-')
             plt.pause(0.00001)
+
+    input("Konec analýzi pro pokračování stiskněte jakoukoliv klávesu")
 
 if __name__ == '__main__':
     input_data = []
@@ -101,17 +115,4 @@ if __name__ == '__main__':
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
-    bias_variance_plot(200, 32 * 32, len(labels), train, validation, test)
-    """
-    with MultilayerPerceptron(32 * 32, 50, len(labels)) as neural_net:
-        neural_net.train(train, 1e-2, validation, 100000)
-        # neural_net.load("./2017-04_20_23_09/model.ckpt")
-
-        print("Přesnost na testovacích datech %s" % neural_net.accuracy(test))
-        print("Přesnost na trénovacích datech %s" % neural_net.accuracy(train))
-
-        for i in range(10):
-            indx = random.randint(0, len(input_data) - 1)
-            j, k = (neural_net.feed_forward(np.matrix(input_data[indx]["input"]))[0], input_data[indx]["output"])
-            print("Neuronka si myslí, že vzorek je %s skutečnost je %s" % (labels[j], labels[k]))
-    """
+    bias_variance_plot(32 * 32, len(labels), train, validation, test)

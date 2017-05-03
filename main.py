@@ -95,18 +95,20 @@ if __name__ == '__main__':
     input_data = []
     labels = []
     class_number = 0
+    samples_limit = 50
     print("Načítám data")
-    for size in ["lowercase", "uppercase"]:
+    for size in ["lowercase"]:
         for folder in os.listdir("./resources/output/alphabet_3/%s" % size):
             labels.append(folder)
-            for sample in os.listdir("./resources/output/alphabet_3/%s/%s" % (size, folder)):
+            for i, sample in enumerate(os.listdir("./resources/output/alphabet_3/%s/%s" % (size, folder))):
+                if i is samples_limit:
+                    break
                 input_data.append({
                     "input": image_to_vector("./resources/output/alphabet_3/%s/%s/%s" % (size, folder, sample)),
                     "output": class_number,
                     "filename": sample
                 })
             class_number += 1
-
     print("Načetl jsem %s obrázků" % (len(input_data)))
     print("Počet labelů %s" % (len(labels)))
     print(labels)

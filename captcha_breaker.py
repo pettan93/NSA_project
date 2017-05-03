@@ -41,7 +41,7 @@ def break_captcha(path):
     box = Box(20, 0, 20, 32)
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     with MultilayerPerceptron(32 * 32, 50, len(labels)) as neural_network:
-        neural_network.load("./2017-04_09_45_42/model.ckpt")
+        neural_network.load("./2017-05_20_44_29/model.ckpt")
         while box.w_x < image.size[0] - 20:
             img_data = image.crop(box.tuple()).convert("LA").resize((32, 32))
             data = [x[0] for x in img_data.getdata()]
@@ -65,4 +65,4 @@ def break_captcha(path):
 
 
 if __name__ == '__main__':
-    break_captcha("resources/output/captcha1.png")
+    break_captcha("resources/output/alphabet_3/captcha4.png")

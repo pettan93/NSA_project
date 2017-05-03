@@ -88,13 +88,13 @@ class MultilayerPerceptron:
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
             _ = self.session.run([train_step], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
-        """
-        import os
-        time_stamp = current_time()
-        path = os.path.join(os.getcwd(), time_stamp)
-        os.mkdir(path)
-        saver.save(self.session, os.path.join(path, "model.ckpt"))
-        """
+
+        # Uložení naučené neuronky
+        # import os
+        # time_stamp = current_time()
+        # path = os.path.join(os.getcwd(), time_stamp)
+        # os.mkdir(path)
+        # saver.save(self.session, os.path.join(path, "model.ckpt"))
 
     def accuracy_tensor(self, test_data):
         """

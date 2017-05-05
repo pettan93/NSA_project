@@ -92,6 +92,11 @@ def bias_variance_plot(input_size, output_size, train, validation, test):
             plt.pause(0.00001)
     input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
 
+def unpickle(file):
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
+    return dict
 
 def dump_train(input_size, output_size, train, validation, test):
     from ML.MultilayerPerceptron import MultilayerPerceptron
@@ -175,6 +180,7 @@ if __name__ == '__main__':
     class_number = 0
     samples_limit = 1000
     print("Načítám data")
+    """
     for size in ["lowercase"]:
         for folder in os.listdir("./resources/output/alphabet_6/%s" % size):
             labels.append(folder)
@@ -193,16 +199,23 @@ if __name__ == '__main__':
     random.shuffle(input_data)
 
     train, validation, test = split(input_data, 60 / 100, 50 / 100)
-
+    """
+    train = unpickle("cifar-10-batches-py/data_batch_1")
+    train = (train[b"data"].astype(np.float32), (list(map(lambda x: one_hot(x, 10), train[b"labels"]))))
+    validation = unpickle("cifar-10-batches-py/data_batch_2")
+    validation = (validation[b"data"].astype(np.float32), (list(map(lambda x: one_hot(x, 10), validation[b"labels"]))))
+    test = unpickle("cifar-10-batches-py/data_batch_3")
+    test = (test[b"data"].astype(np.float32), (list(map(lambda x: one_hot(x, 10), test[b"labels"]))))
+    
     # plot_data(train, validation, test, labels)
-
+    """
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
-
+    """
     # bias_variance_plot(32 * 32, len(labels), train, validation, test)
 
 
-    dump_train(32 * 32, len(labels), train, validation, test)
+    dump_train(32 * 32 * 3, 10, train, validation, test)
 
 

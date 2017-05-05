@@ -56,14 +56,19 @@ class MultilayerPerceptron:
         # Vrátí index největší hodnoty z výstupu
         return self.session.run(tf.argmax(prediction, 1), feed_dict={self.input_layer: input_data})
 
-    def j(self, input_data, y_data):
-        y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
-        hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
+    def j_tensor(self, input_data, y_data):
+        y_ = tf.constant(y_data, name='predpokladana_klasifikace')
+        input_tensor = tf.constant(input_data)
+        hidden_output = tf.nn.relu(tf.add(tf.matmul(input_tensor, self.hidden_layer), self.bias_1))
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
         # Naše cost funkce
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
-        return self.session.run(cross_entropy, feed_dict={self.input_layer: input_data, y_: y_data})
+        return cross_entropy
+
+    def j(self, input_data, y_data):
+        tensor = self.j_tensor(input_data, y_data)
+        return self.session.run(tensor)
 
     def train(self, training_set, learning_rate, validation_data, epochs):
         """
@@ -89,10 +94,15 @@ class MultilayerPerceptron:
         # Batcher vrací náhodně promíchané vzorky
         batcher = Batcher(training_set[0], training_set[1])
         # Neuronku učíme po x epoch
+        import matplotlib.pyplot as plt
+        j_hist = []
+        j_validation_tensor = self.j_tensor(validation_data[0], validation_data[1])
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
-            _ = self.session.run([train_step], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
-
+            _, j = self.session.run([train_step, j_validation_tensor], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
+            j_hist.append(j)
+        plt.plot(j_hist,"b-")
+        plt.show()
         # Uložení naučené neuronky
         # import os
         # time_stamp = current_time()

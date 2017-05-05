@@ -97,7 +97,9 @@ def dump_train(input_size, output_size, train, validation, test):
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
     with MultilayerPerceptron(input_size, 200, output_size) as neural_net:
-        neural_net.dump_train(train, 0.01, validation, 1000)
+        neural_net.train(train, 0.1, validation, 1000)
+        print("Error output ->")
+        print(neural_net.error(test),"%")
     print("Neuronka naučená.")
 
 
@@ -171,16 +173,16 @@ if __name__ == '__main__':
     input_data = []
     labels = []
     class_number = 0
-    samples_limit = 100
+    samples_limit = 1000
     print("Načítám data")
     for size in ["lowercase"]:
-        for folder in os.listdir("./resources/output/alphabet_10/%s" % size):
+        for folder in os.listdir("./resources/output/alphabet_6/%s" % size):
             labels.append(folder)
-            for i, sample in enumerate(os.listdir("./resources/output/alphabet_10/%s/%s" % (size, folder))):
+            for i, sample in enumerate(os.listdir("./resources/output/alphabet_6/%s/%s" % (size, folder))):
                 if i is samples_limit:
                     break
                 input_data.append({
-                    "input": image_to_vector("./resources/output/alphabet_10/%s/%s/%s" % (size, folder, sample)),
+                    "input": image_to_vector("./resources/output/alphabet_6/%s/%s/%s" % (size, folder, sample)),
                     "output": class_number,
                     "class": folder
                 })
@@ -192,11 +194,15 @@ if __name__ == '__main__':
 
     train, validation, test = split(input_data, 60 / 100, 50 / 100)
 
-    plot_data(train, validation, test, labels)
+    # plot_data(train, validation, test, labels)
 
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
-    bias_variance_plot(32 * 32, len(labels), train, validation, test)
-    # dump_train(32 * 32, len(labels), train, validation, test)
+    # bias_variance_plot(32 * 32, len(labels), train, validation, test)
+
+
+    dump_train(32 * 32, len(labels), train, validation, test)
+
+

@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from ML.Batcher import Batcher
@@ -88,6 +90,42 @@ class MultilayerPerceptron:
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
             _ = self.session.run([train_step], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
+
+        # Uložení naučené neuronky
+        # import os
+        # time_stamp = current_time()
+        # path = os.path.join(os.getcwd(), time_stamp)
+        # os.mkdir(path)
+        # saver.save(self.session, os.path.join(path, "model.ckpt"))
+
+    def dump_train(self, training_set, learning_rate, validation_data, epochs):
+        """
+        Trénování neuronové sítě
+        :param training_set: trénovací množina
+        :param learning_rate: učící parametr
+        :param epochs: počet učících epoch
+        """
+        # # Data, která má neuronka předpovídat
+        # y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
+        # # Feed forward
+        # hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
+        # feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
+        # # Konec feed forwardu máme předpověď
+        # # Naše cost funkce
+        # cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        # # Samotná učení na jeden řádek řeknu dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
+        # train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
+        # saver = tf.train.Saver()
+        # # Přesnost na validačních datech
+        # tf.global_variables_initializer().run()
+        # # Batcher vrací náhodně promíchané vzorky
+        batcher = Batcher(training_set[0], training_set[1])
+        # Neuronku učíme po x epoch
+        for i in range(epochs):
+            training_set = batcher.next_batch(len(training_set))
+            print("epocha",i)
+            print("training_set", len(training_set))
+            # _ = self.session.run([train_step], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
 
         # Uložení naučené neuronky
         # import os

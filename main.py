@@ -1,10 +1,12 @@
+from pprint import pprint
+
 import numpy as np
 from PIL import Image
 import os
 import random
 
 
-def remove_borders(matrix, tol = 200):
+def remove_borders(matrix, tol=200):
     mask = matrix < tol
     coords = np.argwhere(mask)
     if coords.size == 0:
@@ -52,7 +54,7 @@ def prepare_for_neural_network(data):
     :return: 
     """
     input_matrix = np.array([x['input'] for x in data], dtype=np.float32)
-    return (input_matrix, np.array([one_hot(x['output'], len(labels)) for x in data]))
+    return input_matrix, np.array([one_hot(x['output'], len(labels)) for x in data])
 
 
 def split(input_data, train, test):
@@ -69,7 +71,7 @@ def bias_variance_plot(input_size, output_size, train, validation, test):
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
     j_train_label = mpatches.Patch(color='red', label='$j_{trenovaci}$')
-    j_validation_label=mpatches.Patch(color='blue', label='$j_{validace}$')
+    j_validation_label = mpatches.Patch(color='blue', label='$j_{validace}$')
     plt.ion()
     plt.ylabel("J($\\theta$)")
     plt.xlabel("Pocet vzorku")
@@ -82,39 +84,119 @@ def bias_variance_plot(input_size, output_size, train, validation, test):
     for training_percentage in range(10, 101, 5):
         with MultilayerPerceptron(input_size, 200, output_size) as neural_net:
             train = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
-            neural_net.train(train, 1e-2, validation, 1000)
+            neural_net.train(train, 0.01, validation, 1000)
             j_train.append(neural_net.j(train[0], train[1]))
             j_validation.append(neural_net.j(validation[0], validation[1]))
             x_axis = list(range(len(j_train)))
             plt.plot(x_axis, j_train, 'r-', x_axis, j_validation, 'b-')
             plt.pause(0.00001)
+    input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
 
-    input("Konec analýzi pro pokračování stiskněte jakoukoliv klávesu")
+
+def dump_train(input_size, output_size, train, validation, test):
+    from ML.MultilayerPerceptron import MultilayerPerceptron
+
+    with MultilayerPerceptron(input_size, 200, output_size) as neural_net:
+        neural_net.dump_train(train, 0.01, validation, 1000)
+    print("Neuronka naučená.")
+
+
+def plot_data(train, validation, test, labels):
+    # what the hell, piece of the most ineffective code in galaxy starts here..
+    d_train = dict()
+    d_validation = dict()
+    d_test = dict()
+    for sample in train:
+        if sample["class"] not in d_train:
+            d_train[sample["class"]] = 0
+        d_train[sample["class"]] += 1
+    for sample in validation:
+        if sample["class"] not in d_validation:
+            d_validation[sample["class"]] = 0
+        d_validation[sample["class"]] += 1
+    for sample in test:
+        if sample["class"] not in d_test:
+            d_test[sample["class"]] = 0
+        d_test[sample["class"]] += 1
+
+    a_train = list()
+    for l in labels:
+        a_train.append(d_train[l])
+
+    a_val = list()
+    for l in labels:
+        a_val.append(d_validation[l])
+
+    a_test = list()
+    for l in labels:
+        a_test.append(d_test[l])
+    # survived? gz
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    N = len(labels)
+
+    ind = np.arange(N)
+    width = 0.28
+
+    fig, ax = plt.subplots()
+
+    rects1 = ax.bar(ind, a_train, width, color='r')
+    rects2 = ax.bar(ind + width, a_val, width, color='y')
+    rects3 = ax.bar(ind + (width * 2), a_test, width, color='b')
+
+    ax.set_ylabel('Number of samples')
+    ax.set_title('Data splited to  train, cross-validation and test')
+
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels(labels)
+
+    ax.legend((rects1[0], rects2[0], rects3[0]), ('Train', 'Validation', "Test"))
+
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width() / 2., 1.05 * height,
+                    '%d' % int(height),
+                    ha='center', va='bottom')
+
+    autolabel(rects1)
+    autolabel(rects2)
+    autolabel(rects3)
+    plt.show()
+
 
 if __name__ == '__main__':
     input_data = []
     labels = []
     class_number = 0
-    samples_limit = 50
+    samples_limit = 100
     print("Načítám data")
     for size in ["lowercase"]:
-        for folder in os.listdir("./resources/output/alphabet_3/%s" % size):
+        for folder in os.listdir("./resources/output/alphabet_10/%s" % size):
             labels.append(folder)
-            for i, sample in enumerate(os.listdir("./resources/output/alphabet_3/%s/%s" % (size, folder))):
+            for i, sample in enumerate(os.listdir("./resources/output/alphabet_10/%s/%s" % (size, folder))):
                 if i is samples_limit:
                     break
                 input_data.append({
-                    "input": image_to_vector("./resources/output/alphabet_3/%s/%s/%s" % (size, folder, sample)),
+                    "input": image_to_vector("./resources/output/alphabet_10/%s/%s/%s" % (size, folder, sample)),
                     "output": class_number,
-                    "filename": sample
+                    "class": folder
                 })
             class_number += 1
     print("Načetl jsem %s obrázků" % (len(input_data)))
     print("Počet labelů %s" % (len(labels)))
     print(labels)
     random.shuffle(input_data)
+
     train, validation, test = split(input_data, 60 / 100, 50 / 100)
+
+    plot_data(train, validation, test, labels)
+
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
-    bias_variance_plot(32 * 32, len(labels), train, validation, test)
+
+    # bias_variance_plot(32 * 32, len(labels), train, validation, test)
+    dump_train(32 * 32, len(labels), train, validation, test)

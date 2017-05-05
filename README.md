@@ -1,3 +1,6 @@
+**Project documentation**
+ [Link](https://docs.google.com/document/d/1K3ugvc8vsGFLpAM_zuavI64Qey4LfhYSctv1TGIG1Gc/edit)
+
 **Generated data sets**
 
 - resources/output/alphabet_1

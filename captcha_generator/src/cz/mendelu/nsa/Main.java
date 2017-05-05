@@ -5,10 +5,7 @@ import com.sun.org.apache.xpath.internal.SourceTree;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.CharArrayReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -51,13 +48,13 @@ public class Main {
 //            fontPaths.addAll(loadFonts());
 
 //             font settings in "generate" method
-            generateAlphabet("NSA_project/resources/output/alphabet_9", 1000);
+            generateAlphabet("NSA_project/resources/output/alphabet_10", 100);
 
 
 
             int i = 0;
             for (String captcha : captchas) {
-                generate(captcha, "NSA_project/resources/output/alphabet_9/" + "captcha" + i + ".png");
+                generate(captcha, "NSA_project/resources/output/alphabet_10/" + "captcha" + i + ".png");
                 i++;
             }
 
@@ -73,7 +70,7 @@ public class Main {
         String fontPath = fontPaths.get(new Random().nextInt(fontPaths.size()));
 //        String fontPath = "../resources/fonts/boxpot.ttf";
 
-        CaptchaGenerator generator = new CaptchaGenerator(str.length() * 32, 32, fontPath, 30, Boolean.TRUE, 10, 30, 40);
+        CaptchaGenerator generator = new CaptchaGenerator(str.length() * 8, 8, fontPath, 8, Boolean.FALSE, 10, 0, 0);
 
         generator.setup();
 
@@ -95,7 +92,7 @@ public class Main {
         BufferedImage bi = generator.createCaptcha(charArray);
 
 
-        bi = addNoise(bi, 2);
+//        bi = addNoise(bi, 2);
 
         File outfile = new File(outputFile);
         try {

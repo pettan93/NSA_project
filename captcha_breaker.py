@@ -1,6 +1,8 @@
+from subprocess import check_output
+
 from ML.MultilayerPerceptron import MultilayerPerceptron
 from PIL import Image, ImageOps
-#from skimage.feature import corner_harris, corner_subpix, corner_peaks
+# from skimage.feature import corner_harris, corner_subpix, corner_peaks
 import numpy as np
 
 
@@ -26,7 +28,8 @@ class Box:
         self.y += 1
         self.h_y = self.y + self.height
 
-def remove_borders(matrix, tol = 200):
+
+def remove_borders(matrix, tol=200):
     mask = matrix < tol
     coords = np.argwhere(mask)
     if coords.size == 0:
@@ -35,13 +38,22 @@ def remove_borders(matrix, tol = 200):
     x1, y1 = coords.max(axis=0) + 1
     return matrix[x0:x1, y0:y1]
 
+
 import numpy as np
+
+
 def break_captcha(path):
     image = Image.open(path)
+    print("Neuronka chce přečíst násedující obrázek..")
+    image.show()
+
     box = Box(20, 0, 20, 32)
-    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    with MultilayerPerceptron(32 * 32, 50, len(labels)) as neural_network:
-        neural_network.load("./2017-05_20_44_29/model.ckpt")
+    # labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    #  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+              'v', 'w', 'x', 'y', 'z']
+    with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
+        neural_network.load("./2017-05_21_01_02/model.ckpt")
         while box.w_x < image.size[0] - 20:
             img_data = image.crop(box.tuple()).convert("LA").resize((32, 32))
             data = [x[0] for x in img_data.getdata()]
@@ -59,7 +71,7 @@ def break_captcha(path):
             data_img.show()
             data = np.matrix([x[0] / 255 for x in data_img.getdata()])
             indx = neural_network.feed_forward(data)
-            print(labels[indx[0]])
+            print("Neuronka vyhodnotila [" + labels[indx[0]] + "]")
             box.x += 20
             input("enter pro další znak")
 

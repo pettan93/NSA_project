@@ -198,5 +198,5 @@ if __name__ == '__main__':
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
-    # bias_variance_plot(32 * 32, len(labels), train, validation, test)
-    dump_train(32 * 32, len(labels), train, validation, test)
+    bias_variance_plot(32 * 32, len(labels), train, validation, test)
+    # dump_train(32 * 32, len(labels), train, validation, test)

@@ -27,6 +27,7 @@ class MultilayerPerceptron:
         self.input_size = input_size
         # Vstupní vrstva velikost x * input_size
         with tf.name_scope("neuronka"):
+            # placeholder - neco jako konstanta, None - libovolná velikost v tomto směru
             self.input_layer = tf.placeholder(tf.float32, [None, self.input_size])
             # Skrytá vrstva náhodně inicializovaná náhodně input_size * number_of_neurons
             self.hidden_layer = tf.Variable(tf.random_normal([self.input_size, number_of_neurons]), name='skryta_vrstva')
@@ -78,6 +79,7 @@ class MultilayerPerceptron:
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
         # Naše cost funkce
+        # labels - co to ma predpovedet, logits - co to predpovida
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
         # Samotná učení na jeden řádek řeknu dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)

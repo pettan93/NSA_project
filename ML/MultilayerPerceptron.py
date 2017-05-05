@@ -150,6 +150,9 @@ class MultilayerPerceptron:
 
     def accuracy(self, test_data):
         return self.session.run(self.accuracy_tensor(test_data), feed_dict={self.input_layer: test_data[0]})
+    
+    def error(self, test_data):
+        return 100 - self.accuracy(test_data)
 
     def load(self, path):
         saver = tf.train.Saver()

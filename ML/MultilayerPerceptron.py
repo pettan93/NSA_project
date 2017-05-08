@@ -52,7 +52,7 @@ class MultilayerPerceptron:
         # Výstup ze skryté vrstvy relu(input_layer * hidden_layer + bias)
         hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
         # Výstup neuronky hidden_output * output_layer + bias_2
-        prediction = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
+        prediction = tf.nn.softmax(tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2))
         # Vrátí index největší hodnoty z výstupu
         return self.session.run(tf.argmax(prediction, 1), feed_dict={self.input_layer: input_data})
 
@@ -70,6 +70,10 @@ class MultilayerPerceptron:
         tensor = self.j_tensor(input_data, y_data)
         return self.session.run(tensor)
 
+    def stop(self, evt):
+        if evt.key == 'q':
+            self.run = False
+
     def train(self, training_set, learning_rate, validation_data, epochs):
         """
         Trénování neuronové sítě
@@ -77,6 +81,8 @@ class MultilayerPerceptron:
         :param learning_rate: učící parametr
         :param epochs: počet učících epoch
         """
+        # Pro předčasné zastavení učení
+        self.run = True
         # Data, která má neuronka předpovídat
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
         # Feed forward
@@ -95,14 +101,25 @@ class MultilayerPerceptron:
         batcher = Batcher(training_set[0], training_set[1])
         # Neuronku učíme po x epoch
         import matplotlib.pyplot as plt
+        plt.ion()
+        # Při uzavření vykreslovacího okna zastavíme učení
+        plt.connect('key_press_event', self.stop)
+        plt.ylabel("J($\\theta$)")
+        plt.xlabel("epocha * 1000")
         j_hist = []
+        err_hist = []
         j_validation_tensor = self.j_tensor(validation_data[0], validation_data[1])
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
             _, j = self.session.run([train_step, j_validation_tensor], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
-            j_hist.append(j)
-        plt.plot(j_hist,"b-")
-        plt.show()
+            if i % 1000 == 0:
+                j_hist.append(j)
+                plt.plot(j_hist, "r-")
+                plt.pause(0.0000001)
+            if not self.run:
+                break
+
+
         # Uložení naučené neuronky
         # import os
         # time_stamp = current_time()
@@ -152,7 +169,7 @@ class MultilayerPerceptron:
         """
         input_layer = tf.constant(test_data[0])
         hidden_layer = tf.nn.relu(tf.add(tf.matmul(input_layer, self.hidden_layer), self.bias_1))
-        prediction = tf.add(tf.matmul(hidden_layer, self.output_layer), self.bias_2)
+        prediction = tf.nn.softmax(tf.add(tf.matmul(hidden_layer, self.output_layer), self.bias_2))
         feed = tf.argmax(prediction, 1)
         comparsion_data = tf.constant(test_data[1])
         comparsion = tf.equal(feed, tf.argmax(comparsion_data, 1))

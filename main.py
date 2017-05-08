@@ -69,17 +69,36 @@ def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, t
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
-    plt.ylabel("J($\\theta$)")
+    plt.ylabel("Přesnost")
     plt.xlabel("$\\lambda$")
-    j_validation = []
+    accuracy = []
     x_axis = []
     for real_lambda in reversed(np.arange(softness, 1, softness)):
         with MultilayerPerceptron(input_size, hidden_layer_size, output_size) as neural_net:
             neural_net.train(train, real_lambda, validation, training_length)
-            j_validation.append(neural_net.j(test[0], test[1]))
+            accuracy.append(neural_net.accuracy(test))
             x_axis.append(real_lambda)
-            plt.plot(x_axis, j_validation, 'b-')
+            plt.plot(x_axis, accuracy, 'b-')
             plt.gca().invert_xaxis()
+            plt.pause(0.00001)
+    plt.ioff()
+    input('Done')
+
+
+def epoch_plot(input_size, hidden_layer_size, output_size, train, validation, test, real_lambda, training_length):
+    from ML.MultilayerPerceptron import MultilayerPerceptron
+    import matplotlib.pyplot as plt
+    plt.ion()
+    plt.ylabel("Přesnost")
+    plt.xlabel("epocha")
+    accuracy = []
+    x_axis = []
+    for length in range(1, training_length + 1, 1000):
+        with MultilayerPerceptron(input_size, hidden_layer_size, output_size) as neural_net:
+            neural_net.train(train, real_lambda, validation, length)
+            accuracy.append(neural_net.accuracy(test))
+            x_axis.append(length)
+            plt.plot(x_axis, accuracy, 'b-')
             plt.pause(0.00001)
     plt.ioff()
     input('Done')
@@ -224,6 +243,7 @@ if __name__ == '__main__':
 
 
     #dump_train(32 * 32, len(labels), train, validation, test)
-    lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
+    #lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
+    epoch_plot(32 * 32, 300, len(labels), train, validation, test, 0.001, 100000)
 
 

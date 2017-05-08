@@ -74,7 +74,7 @@ class MultilayerPerceptron:
         if evt.key == 'q':
             self.run = False
 
-    def train(self, training_set, learning_rate, validation_data, epochs):
+    def train(self, training_set, learning_rate, validation_data, epochs, plot = False):
         """
         Trénování neuronové sítě
         :param training_set: trénovací množina
@@ -101,18 +101,18 @@ class MultilayerPerceptron:
         batcher = Batcher(training_set[0], training_set[1])
         # Neuronku učíme po x epoch
         import matplotlib.pyplot as plt
-        plt.ion()
-        # Při uzavření vykreslovacího okna zastavíme učení
-        plt.connect('key_press_event', self.stop)
-        plt.ylabel("J($\\theta$)")
-        plt.xlabel("epocha * 1000")
+        if plot:
+            plt.ion()
+            # Při uzavření vykreslovacího okna zastavíme učení
+            plt.connect('key_press_event', self.stop)
+            plt.ylabel("J($\\theta$)")
+            plt.xlabel("epocha * 1000")
         j_hist = []
-        err_hist = []
         j_validation_tensor = self.j_tensor(validation_data[0], validation_data[1])
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
             _, j = self.session.run([train_step, j_validation_tensor], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
-            if i % 1000 == 0:
+            if i % 1000 == 0 and plot:
                 j_hist.append(j)
                 plt.plot(j_hist, "r-")
                 plt.pause(0.0000001)

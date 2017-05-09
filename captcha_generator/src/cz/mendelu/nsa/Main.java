@@ -1,11 +1,11 @@
 package cz.mendelu.nsa;
 
-import com.sun.org.apache.xpath.internal.SourceTree;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -13,10 +13,55 @@ import java.util.Random;
 
 public class Main {
 
+    // do not touch these
+    private static List<String> fontPaths = new ArrayList<>();
+    private static final String fs = File.separator;
+    private static final String resouces_path = "NSA_project" + fs + "resources";
+    private static CaptchaGenerator generator = null;
 
-    public static List<String> fontPaths = new ArrayList<>();
+    // definitely touch these!
+    private static final String alphabet_out = "alphabet_7";
+    private static final int samples = 1000;
 
-    public static void main(String[] args) {
+    // alphabet settings
+    private static final String font = "boxpot.ttf";
+    private static final int size = 32;
+    private static final int fontSize = 25;
+    private static final Boolean all_fonts = Boolean.FALSE;
+    private static final Boolean upperCase = Boolean.FALSE;
+    private static final Boolean noise = Boolean.FALSE;
+    private static final int noiseLevel = 5;                // 1 - 10
+    private static final Boolean grid = Boolean.TRUE;
+    private static final int gridSize = 10;                  // 1 - 10 px
+    private static final int rotationApmlitude = 30;
+    private static final int scaleApmlitude = 30;
+
+
+    public static void main(String[] args) throws IOException {
+
+        // pokud jde o volání z Pythonu
+        if (args.length > 0) {
+            argsCall(args);
+            System.exit(0);
+        }
+
+        generator = new CaptchaGenerator(1, 1, null, fontSize, grid, gridSize, rotationApmlitude, scaleApmlitude);
+
+        if (all_fonts)
+            fontPaths.addAll(loadFonts());
+        else
+            fontPaths.add(resouces_path + fs + "fonts" + fs + font);
+
+        Zipper zipper = new Zipper(resouces_path + fs + "output" + fs + alphabet_out);
+
+        makeDir(resouces_path + fs + "output" + fs + alphabet_out);
+
+        // generate lowercase alphabet
+        generateAlphabet(resouces_path + fs + "output" + fs + alphabet_out + fs + "lowercase" + fs, false, samples);
+
+        // mkay.. generate also uppercase alphabet
+        if (upperCase)
+            generateAlphabet(resouces_path + fs + "output" + fs + alphabet_out + fs + "uppercase" + fs, true, samples);
 
         List<String> captchas = new ArrayList<>();
         captchas.add("hello nsa project");
@@ -32,67 +77,54 @@ public class Main {
         captchas.add("love");
         captchas.add("mendel university in brno");
         captchas.add("red alert two");
-        captchas.add("zerglins at the gates");
-
-        try {
-            // pokud jde o volání z Pythonu
-            if (args.length > 0) {
-                argsCall(args);
-                System.exit(0);
-            }
-
-//        generování jen jedním fontem
-            fontPaths.add("NSA_project/resources/fonts/boxpot.ttf");
-
-            // generování více fonty
-//            fontPaths.addAll(loadFonts());
-
-//             font settings in "generate" method
-            generateAlphabet("NSA_project/resources/output/alphabet_10", 100);
-
-
-
-            int i = 0;
-            for (String captcha : captchas) {
-                generate(captcha, "NSA_project/resources/output/alphabet_10/" + "captcha" + i + ".png");
-                i++;
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        captchas.add("zerglings at the gates");
+        int i = 0;
+        for (String captcha : captchas) {
+            if (upperCase)
+                generate(captcha, true, resouces_path + fs + "output" + fs + alphabet_out + fs + "captcha" + i + ".png");
+            else
+                generate(captcha, false, resouces_path + fs + "output" + fs + alphabet_out + fs + "captcha" + i + ".png");
+            i++;
         }
+
+        System.out.println("Zipuji..");
+        zipper.pack(resouces_path + fs + "output" + fs + alphabet_out + fs + alphabet_out + ".zip");
+        System.out.println("Hotovo!");
+        System.out.println("Uklízim..");
+        clean(resouces_path + fs + "output" + fs + alphabet_out);
+        System.out.println("Hotovo!");
     }
 
 
-    private static void generate(String str, String outputFile) {
+    private static void generate(String str, Boolean randomUpperCase, String outputFile) {
 
-        String fontPath = fontPaths.get(new Random().nextInt(fontPaths.size()));
-//        String fontPath = "../resources/fonts/boxpot.ttf";
 
-        CaptchaGenerator generator = new CaptchaGenerator(str.length() * 8, 8, fontPath, 8, Boolean.FALSE, 10, 0, 0);
+        generator.setWidth(str.length() * size);
+        generator.setHeight(size);
+        generator.setFontPath(fontPaths.get(new Random().nextInt(fontPaths.size())));
 
         generator.setup();
+
 
         String format = outputFile.substring(outputFile.lastIndexOf(".") + 1, outputFile.length());
 
         char[] charArray = str.toCharArray();
 
-
-
-        // random uppercase
-//        Random rand = new Random();
-//        for(int i = 0; i < charArray.length;i++){
-//            int randomNum = rand.nextInt(10) + 1;
-//            if (randomNum > 5)
-//                charArray[i] = Character.toUpperCase(charArray[i]);
-//        }
+        // pokud generuju captcha texty pro abecedu, pro kterou jsem si nageneroval i velke pismena, chci lowercase a uppercase pismena nahodne namichane
+        if (randomUpperCase) {
+            Random rand = new Random();
+            for (int i = 0; i < charArray.length; i++) {
+                int randomNum = rand.nextInt(10) + 1;
+                if (randomNum > 5)
+                    charArray[i] = Character.toUpperCase(charArray[i]);
+            }
+        }
 
 
         BufferedImage bi = generator.createCaptcha(charArray);
 
-
-//        bi = addNoise(bi, 2);
+        if (noise)
+            bi = addNoise(bi, noiseLevel);
 
         File outfile = new File(outputFile);
         try {
@@ -126,11 +158,12 @@ public class Main {
      * @param outDir  Zadejte kořenový adresář pri vygenerování abecedy
      * @param samples Počet vzorků na každý znak
      */
-    private static void generateAlphabet(String outDir, int samples) {
+    private static void generateAlphabet(String outDir, Boolean upperCase, int samples) {
         Long start = System.currentTimeMillis();
-        System.out.println("Generuji abecedu do [/" + outDir + "] počet vzorků na písmeno [" + samples + "]");
+        System.out.println("Generuji abecedu do [" + outDir + "] počet vzorků na písmeno [" + samples + "]");
 
-        char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+
+        char[] alphabet = upperCase ? "abcdefghijklmnopqrstuvwxyz".toUpperCase().toCharArray() : "abcdefghijklmnopqrstuvwxyz".toCharArray();
 
         File root = makeDir(outDir);
 
@@ -138,16 +171,14 @@ public class Main {
 
             File charFolder = makeDir(root.getPath() + "/" + c);
 
-            for (int i = 0; i < samples + 1; i++) {
+            for (int i = 0; i < samples; i++) {
                 System.out.println("Generuji písmeno [" + c + "] vzorek [" + i + "]");
-                generate(Character.toString(c), charFolder.getPath() + "/" + i + ".jpg");
+                generate(Character.toString(c), false, charFolder.getPath() + "/" + i + ".png");
             }
         }
 
         Long end = System.currentTimeMillis();
         System.out.println("Abeceda vygenerovana za [" + (end - start) / 1000 + " sekund]");
-
-
     }
 
 
@@ -200,23 +231,18 @@ public class Main {
 
 
     public static File makeDir(String path) {
-
         File theDir = new File(path);
-
-        if (theDir.exists()) {
+        if (theDir.exists())
             delDir(path);
-        }
-
 
         if (!theDir.exists()) {
             try {
-                theDir.mkdir();
+                theDir.mkdirs();
             } catch (SecurityException se) {
                 se.printStackTrace();
             }
         }
         return theDir;
-
     }
 
 
@@ -234,8 +260,27 @@ public class Main {
             }
     }
 
+    /**
+     * Vymaže všechny soubory a adresáře v daném umistění kromě
+     * sobouru zip
+     * captcha3.png - používá se v githubu pro náhled
+     *
+     * @param source_folder
+     */
+    public static void clean(String source_folder) {
+        for (File file : new File(source_folder).listFiles()) {
+            if (file.getName().contains("zip") || file.getName().contains("captcha3")) {
+            } else {
+                file.delete();
+                if (file.isDirectory())
+                    delDir(file.getPath());
+            }
+
+        }
+    }
+
     public static ArrayList<String> loadFonts() {
-        File fontDir = new File("NSA_project/resources/fonts/");
+        File fontDir = new File(resouces_path + fs + "fonts");
 
         ArrayList<String> fontPaths = new ArrayList<>();
 

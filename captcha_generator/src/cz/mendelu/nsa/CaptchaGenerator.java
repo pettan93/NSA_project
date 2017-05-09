@@ -73,6 +73,7 @@ public class CaptchaGenerator {
     }
 
     public void setup() {
+
         if (this.width > 0 && this.height > 0) {
             if (this.fontPath == null) {
                 throw new IllegalStateException("Font is not set");
@@ -80,9 +81,9 @@ public class CaptchaGenerator {
                 try {
                     InputStream ex = new FileInputStream(fontPath);
                     this.font = Font.createFont(0, ex);
+                    ex.close();
                 } catch (Exception var2) {
                     System.err.println("font path - " + this.fontPath );
-                    System.out.println("font path - " + this.fontPath );
                     throw new IllegalStateException();
                 }
             }

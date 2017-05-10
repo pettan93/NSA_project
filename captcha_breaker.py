@@ -1,9 +1,19 @@
+import random
+from pprint import pprint
 from subprocess import check_output
+import os
+import subprocess
+
+import numpy
+from Tools.scripts.treesync import raw_input
+from matplotlib.pyplot import imshow
 
 from ML.MultilayerPerceptron import MultilayerPerceptron
 from PIL import Image, ImageOps
 # from skimage.feature import corner_harris, corner_subpix, corner_peaks
 import numpy as np
+
+from main import image_to_vector
 
 
 class Box:
@@ -70,11 +80,66 @@ def break_captcha(path):
             data_img = ImageOps.invert(data_img).resize((32, 32)).convert("LA")
             data_img.show()
             data = np.matrix([x[0] / 255 for x in data_img.getdata()])
+            print(data.shape)
+
             indx = neural_network.feed_forward(data)
             print("Neuronka vyhodnotila [" + labels[indx[0]] + "]")
             box.x += 20
             input("enter pro další znak")
 
+    """
+    Interaktivni mod pro zkoušení klasifikace
+    """
+def interactive(neural_network, alphabet_number):
+    import matplotlib.pyplot as plt
+    import matplotlib.image as mpimg
+
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+              'u',
+              'v', 'w', 'x', 'y', 'z']
+    input_char = raw_input("Jaký znak chcete klasifikovat?: ").strip().rstrip('\n')
+
+    total = 0
+    success = 0
+
+    while True:
+        while not (input_char.isalpha() and len(input_char) is 1):
+            print("Není v datech, zkuste znovu.")
+            input_char = raw_input("Jaký znak chcete klasifikovat?: ").strip().rstrip('\n')
+
+        path = random.choice(
+            os.listdir("./resources/output/%s/lowercase/%s" % (alphabet_number, input_char)))
+        path = "./resources/output/%s/lowercase/%s/" % (alphabet_number, input_char) + path
+        print("Nahodne vybrany vzorek znaku [" + input_char + "] - otevíram..")
+
+        plt.imshow(mpimg.imread(path))
+        plt.show(block=False)
+
+        image_vector = image_to_vector(path)
+
+        data = np.array(image_vector).reshape(1, 1024)
+
+        indx = neural_network.feed_forward(data)
+
+        print(" => Neuronka vyhodnotila : [" + labels[indx[0]] + "]\n")
+        total += 1
+        if labels[indx[0]] is input_char:
+            success += 1
+        print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
+
+        input_char = raw_input("Jaký znak chcete klasifikovat?: ").strip().rstrip('\n')
+
+        plt.close()
+
+
+
 
 if __name__ == '__main__':
-    break_captcha("resources/output/alphabet_3/captcha4.png")
+    # break_captcha("resources/output/alphabet_3/captcha3.png")
+
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+              'u',
+              'v', 'w', 'x', 'y', 'z']
+    with MultilayerPerceptron(32 * 32, 300, len(labels)) as neural_network:
+        neural_network.load("./2017-05_21_53_46/model.ckpt")
+        interactive(neural_network, 13)

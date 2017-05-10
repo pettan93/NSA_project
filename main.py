@@ -1,9 +1,8 @@
-from pprint import pprint
+import os
+import random
 
 import numpy as np
 from PIL import Image
-import os
-import random
 
 
 def remove_borders(matrix, tol=200):
@@ -65,7 +64,7 @@ def split(input_data, train, test):
     return training_set, validation_set, test_set
 
 
-def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, test, training_length, softness = 0.01):
+def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, test, training_length, softness=0.01):
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
@@ -90,10 +89,11 @@ def epoch_plot(input_size, hidden_layer_size, output_size, train, validation, te
     import matplotlib.pyplot as plt
     plt.ion()
     plt.ylabel("Přesnost")
-    plt.xlabel("epocha")
+    plt.xlabel("Počet epoch")
     accuracy = []
     x_axis = []
     for length in range(1, training_length + 1, 1000):
+        print(length)
         with MultilayerPerceptron(input_size, hidden_layer_size, output_size) as neural_net:
             neural_net.train(train, real_lambda, validation, length)
             accuracy.append(neural_net.accuracy(test))
@@ -135,11 +135,35 @@ def bias_variance_plot(input_size, output_size, train, validation, test):
 def dump_train(input_size, output_size, train, validation, test):
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
-    with MultilayerPerceptron(input_size, 900, output_size) as neural_net:
-        neural_net.train(train, 0.001, validation, 60000)
-        print("Error output ->")
-        print(neural_net.error(test),"%")
+    neural_net = MultilayerPerceptron(input_size, 700, output_size)
+    neural_net.train(train, 0.01, validation, 2000)
+    # print("Error output ->")
+    # print(neural_net.error(test), "%")
     print("Neuronka naučená.")
+    return neural_net
+
+
+def naive_accuracy_test(neural_network, alphabet_number, samples):
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+              'u',
+              'v', 'w', 'x', 'y', 'z']
+    total = 0
+    success = 0
+    while total < samples:
+        input_char = random.choice(labels)
+        path = random.choice(
+            os.listdir("./resources/output/%s/lowercase/%s" % (alphabet_number, input_char)))
+        path = "./resources/output/%s/lowercase/%s/" % (alphabet_number, input_char) + path
+        image_vector = image_to_vector(path)
+        data = np.array(image_vector).reshape(1, 1024)
+        indx = neural_network.feed_forward(data)
+        print(total,"[" + input_char + "] => [" + labels[indx[0]] + "]")
+        total += 1
+        if labels[indx[0]] is input_char:
+            success += 1
+        print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
+
+
 
 
 def plot_data(train, validation, test, labels):
@@ -209,19 +233,23 @@ def plot_data(train, validation, test, labels):
 
 
 if __name__ == '__main__':
+    from captcha_breaker import interactive
     input_data = []
     labels = []
     class_number = 0
-    samples_limit = 1000
+
+    alphabet = "alphabet_13"
+    samples_limit = 100
+
     print("Načítám data")
     for size in ["lowercase"]:
-        for folder in os.listdir("./resources/output/alphabet_1/%s" % size):
+        for folder in os.listdir("./resources/output/%s/%s" % (alphabet, size)):
             labels.append(folder)
-            for i, sample in enumerate(os.listdir("./resources/output/alphabet_1/%s/%s" % (size, folder))):
+            for i, sample in enumerate(os.listdir("./resources/output/%s/%s/%s" % (alphabet, size, folder))):
                 if i is samples_limit:
                     break
                 input_data.append({
-                    "input": image_to_vector("./resources/output/alphabet_1/%s/%s/%s" % (size, folder, sample)),
+                    "input": image_to_vector("./resources/output/%s/%s/%s/%s" % (alphabet, size, folder, sample)),
                     "output": class_number,
                     "class": folder
                 })
@@ -241,9 +269,9 @@ if __name__ == '__main__':
 
     # bias_variance_plot(32 * 32, len(labels), train, validation, test)
 
+    neural_network = dump_train(32 * 32, len(labels), train, validation, test)
+    # interactive(neural_network, alphabet)
+    naive_accuracy_test(neural_network, alphabet, 2000)
 
-    #dump_train(32 * 32, len(labels), train, validation, test)
-    #lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
-    epoch_plot(32 * 32, 300, len(labels), train, validation, test, 0.001, 100000)
-
-
+    # lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
+    # epoch_plot(32 * 32, 300, len(labels), train, validation, test, 0.001, 100000)

@@ -20,7 +20,7 @@ public class Main {
     private static CaptchaGenerator generator = null;
 
     // definitely touch these!
-    private static final String alphabet_out = "alphabet_7";
+    private static final String alphabet_out = "alphabet_9";
     private static final int samples = 1000;
 
     // alphabet settings
@@ -29,8 +29,8 @@ public class Main {
     private static final int fontSize = 25;
     private static final Boolean all_fonts = Boolean.FALSE;
     private static final Boolean upperCase = Boolean.FALSE;
-    private static final Boolean noise = Boolean.FALSE;
-    private static final int noiseLevel = 5;                // 1 - 10
+    private static final Boolean noise = Boolean.TRUE;
+    private static final int noiseLevel = 2;                // 1 - 10
     private static final Boolean grid = Boolean.TRUE;
     private static final int gridSize = 10;                  // 1 - 10 px
     private static final int rotationApmlitude = 30;

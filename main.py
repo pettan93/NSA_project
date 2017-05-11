@@ -68,7 +68,7 @@ def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, t
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
-    plt.ylabel("Přesnost")
+    plt.ylabel("Přesnost [%]")
     plt.xlabel("$\\lambda$")
     accuracy = []
     x_axis = []
@@ -88,20 +88,24 @@ def epoch_plot(input_size, hidden_layer_size, output_size, train, validation, te
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
-    plt.ylabel("Přesnost")
+    plt.ylabel("Přesnost [%]")
     plt.xlabel("Počet epoch")
     accuracy = []
     x_axis = []
-    for length in range(1, training_length + 1, 1000):
+    last_accuracy = None
+    for length in range(1, training_length + 1, 500):
         print(length)
         with MultilayerPerceptron(input_size, hidden_layer_size, output_size) as neural_net:
             neural_net.train(train, real_lambda, validation, length)
-            accuracy.append(neural_net.accuracy(test))
+            acc = neural_net.accuracy(test)
+            accuracy.append(acc)
+            last_accuracy = acc
             x_axis.append(length)
             plt.plot(x_axis, accuracy, 'b-')
             plt.pause(0.00001)
     plt.ioff()
-    input('Done')
+    print('Done, Last accuracy : ', last_accuracy, "%")
+    input("Press Enter to exit")
 
 
 def bias_variance_plot(input_size, output_size, train, validation, test):
@@ -132,23 +136,25 @@ def bias_variance_plot(input_size, output_size, train, validation, test):
     input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
 
 
-def dump_train(input_size, output_size, train, validation, test):
+def dump_train(input_size, output_size, train, validation, test, neurons, alpha, epochs):
     from ML.MultilayerPerceptron import MultilayerPerceptron
 
-    neural_net = MultilayerPerceptron(input_size, 700, output_size)
-    neural_net.train(train, 0.01, validation, 2000)
-    # print("Error output ->")
-    # print(neural_net.error(test), "%")
+    neural_net = MultilayerPerceptron(input_size, neurons, output_size)
+    neural_net.train(train, alpha, validation, epochs)
+    print("Vypočtená chyba - neural_net.error : ", neural_net.error(test), "%")
     print("Neuronka naučená.")
     return neural_net
 
 
-def naive_accuracy_test_from_drive(neural_network, alphabet_number, samples):
+def naive_accuracy_test_from_drive(neural_network, alphabet_number, samples, verbose):
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
               'u',
               'v', 'w', 'x', 'y', 'z']
     total = 0
     success = 0
+    if not verbose:
+        print("Testuji..")
+
     while total < samples:
         input_char = random.choice(labels)
         path = random.choice(
@@ -157,25 +163,38 @@ def naive_accuracy_test_from_drive(neural_network, alphabet_number, samples):
         image_vector = image_to_vector(path)
         data = np.array(image_vector).reshape(1, 1024)
         indx = neural_network.feed_forward(data)
-        print(total, "[" + input_char + "] => [" + labels[indx[0]] + "]")
+        if verbose:
+            print(total, "[" + input_char + "] => [" + labels[indx[0]] + "]")
         total += 1
         if labels[indx[0]] is input_char:
             success += 1
+        if verbose:
+            print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
+    if not verbose:
         print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
 
 
-def naive_accuracy_test(neural_network, test_data):
+def naive_accuracy_test(neural_network, test_data, verbose):
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
               'u',
               'v', 'w', 'x', 'y', 'z']
     total = 0
     success = 0
+
+    if not verbose:
+        print("Testuji..")
+
     for entry in test_data:
         indx = neural_network.feed_forward(np.array(entry["input"]).reshape(1, 1024))
-        print(total, "[" + entry["class"] + "] => [" + labels[indx[0]] + "]")
+        if verbose:
+            print(total, "[" + entry["class"] + "] => [" + labels[indx[0]] + "]")
         total += 1
         if labels[indx[0]] is entry["class"]:
             success += 1
+        if verbose:
+            print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
+
+    if not verbose:
         print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
 
 
@@ -293,12 +312,13 @@ if __name__ == '__main__':
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
-    neural_network = dump_train(32 * 32, len(labels), train, validation, test)
+    neural_network = dump_train(32 * 32, len(labels), train, validation, test, 700, 0.01, 2000)
 
     # interactive(neural_network, alphabet)
-    naive_accuracy_test(neural_network,naive_test)
-    # naive_accuracy_test_from_drive(neural_network, alphabet, 1000)
+    naive_accuracy_test(neural_network, naive_test, False)
+    print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
+    # naive_accuracy_test_from_drive(neural_network, alphabet, 1000,False)
 
     # bias_variance_plot(32 * 32, len(labels), train, validation, test)
     # lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
-    # epoch_plot(32 * 32, 300, len(labels), train, validation, test, 0.001, 100000)
+    # epoch_plot(32 * 32, 700, len(labels), train, validation, test, 0.01, 2000)

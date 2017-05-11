@@ -306,6 +306,8 @@ def bias_variance_plot_debug(input_size, output_size, train, validation, test, n
     input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
 
 if __name__ == '__main__':
+    import utils.unzip
+    utils.unzip.unzip_datasets()
     input_data = []
     labels = []
     class_number = 0

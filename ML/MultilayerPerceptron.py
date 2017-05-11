@@ -50,6 +50,7 @@ class MultilayerPerceptron:
         :param input_data:  vstupní data o velikosti
         :return: predikce
         """
+        # OK
         # Výstup ze skryté vrstvy relu(input_layer * hidden_layer + bias)
         hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
         # Výstup neuronky hidden_output * output_layer + bias_2
@@ -87,13 +88,15 @@ class MultilayerPerceptron:
         # Data, která má neuronka předpovídat
         y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
         # Feed forward
+        #  Relu = Re(ctified) L(inear) (U)nit
+        #  0 if the input is negative, and the input itself if that input is 0 or positive. This specific add-on function (or better "activation function")
         hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
         # Naše cost funkce
-        # labels - co to ma predpovedet, logits - co to predpovida
+        #   labels - co to ma predpovedet, logits - co to predpovida
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
-        # Samotná učení na jeden řádek řeknu dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
+        # Samotná učení na jeden řádek dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
         saver = tf.train.Saver()
         # Přesnost na validačních datech
@@ -135,34 +138,33 @@ class MultilayerPerceptron:
         :param learning_rate: učící parametr
         :param epochs: počet učících epoch
         """
-        # # Data, která má neuronka předpovídat
-        # y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
-        # # Feed forward
-        # hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
-        # feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
-        # # Konec feed forwardu máme předpověď
-        # # Naše cost funkce
-        # cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
-        # # Samotná učení na jeden řádek řeknu dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
-        # train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
-        # saver = tf.train.Saver()
-        # # Přesnost na validačních datech
-        # tf.global_variables_initializer().run()
-        # # Batcher vrací náhodně promíchané vzorky
+        # Pro předčasné zastavení učení
+        self.run = True
+        # Data, která má neuronka předpovídat
+        y_ = tf.placeholder(tf.float32, [None, self.output_size], name='predpokladana_klasifikace')
+        # Feed forward
+        #  Relu = Re(ctified) L(inear) (U)nit
+        #  0 if the input is negative, and the input itself if that input is 0 or positive. This specific add-on function (or better "activation function")
+        hidden_output = tf.nn.relu(tf.add(tf.matmul(self.input_layer, self.hidden_layer), self.bias_1))
+        feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
+        # Konec feed forwardu máme předpověď
+        # Naše cost funkce
+        #   labels - co to ma predpovedet, logits - co to predpovida
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        # Samotná učení na jeden řádek dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
+        train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
+        saver = tf.train.Saver()
+        # Přesnost na validačních datech
+        tf.global_variables_initializer().run()
+        # Batcher vrací náhodně promíchané vzorky
         batcher = Batcher(training_set[0], training_set[1])
         # Neuronku učíme po x epoch
+        j_hist = []
+        j_validation_tensor = self.j_tensor(validation_data[0], validation_data[1])
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
-            print("epocha",i)
-            print("training_set", len(training_set))
-            # _ = self.session.run([train_step], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
+            _, j = self.session.run([train_step, j_validation_tensor], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
 
-        # Uložení naučené neuronky
-        # import os
-        # time_stamp = current_time()
-        # path = os.path.join(os.getcwd(), time_stamp)
-        # os.mkdir(path)
-        # saver.save(self.session, os.path.join(path, "model.ckpt"))
 
     def accuracy_tensor(self, test_data):
         """
@@ -177,9 +179,11 @@ class MultilayerPerceptron:
         return tf.reduce_mean(tf.cast(comparsion, tf.float32)) * 100
 
     def accuracy(self, test_data):
+        # OK
         return self.session.run(self.accuracy_tensor(test_data), feed_dict={self.input_layer: test_data[0]})
     
     def error(self, test_data):
+        # OK
         return 100 - self.accuracy(test_data)
 
     def load(self, path):

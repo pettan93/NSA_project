@@ -108,7 +108,7 @@ def epoch_plot(input_size, hidden_layer_size, output_size, train, validation, te
     input("Press Enter to exit")
 
 
-def bias_variance_plot(input_size, output_size, train, validation, test):
+def bias_variance_plot(input_size, output_size, train, validation, test, neurons, alpha_rate, epochs):
     from ML.MultilayerPerceptron import MultilayerPerceptron
     from ML import Batcher
     import matplotlib.pyplot as plt
@@ -125,9 +125,9 @@ def bias_variance_plot(input_size, output_size, train, validation, test):
     train_set = train
     batcher = Batcher.Batcher(train[0], train[1])
     for training_percentage in range(10, 101, 5):
-        with MultilayerPerceptron(input_size, 200, output_size) as neural_net:
+        with MultilayerPerceptron(input_size, neurons, output_size) as neural_net:
             train = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
-            neural_net.train(train, 0.01, validation, 1000)
+            neural_net.train(train, alpha_rate, validation, epochs)
             j_train.append(neural_net.j(test[0], test[1]))
             j_validation.append(neural_net.j(validation[0], validation[1]))
             x_axis = list(range(len(j_train)))
@@ -274,9 +274,38 @@ def plot_data(train, validation, test, labels):
     plt.show()
 
 
-if __name__ == '__main__':
-    from captcha_breaker import interactive
 
+def bias_variance_plot_debug(input_size, output_size, train, validation, test, neurons, alpha_rate, epochs):
+    from ML.MultilayerPerceptron import MultilayerPerceptron
+    from ML import Batcher
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    j_train_label = mpatches.Patch(color='red', label='$j_{trenovaci}$')
+    j_validation_label = mpatches.Patch(color='blue', label='$j_{validace}$')
+    plt.ion()
+    plt.ylabel("J($\\theta$)")
+    plt.xlabel("Zpracováno vozorků [%] ")
+    plt.legend(handles=[j_train_label, j_validation_label])
+
+    x_axis = []
+
+    j_train = []
+    j_validation = []
+    train_set = train
+    batcher = Batcher.Batcher(train[0], train[1])
+    for training_percentage in range(10, 101, 5):
+        with MultilayerPerceptron(input_size, neurons, output_size) as neural_net:
+            train = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
+            neural_net.train(train, alpha_rate, validation, epochs)
+            j_train.append(neural_net.j(test[0], test[1]))
+            j_validation.append(neural_net.j(validation[0], validation[1]))
+            # x_axis = list(range(len(j_train)))
+            x_axis.append(training_percentage)
+            plt.plot(x_axis, j_train, 'r-', x_axis, j_validation, 'b-')
+            plt.pause(0.00001)
+    input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
+
+if __name__ == '__main__':
     input_data = []
     labels = []
     class_number = 0
@@ -303,22 +332,24 @@ if __name__ == '__main__':
     random.shuffle(input_data)
 
     train, validation, test = split(input_data, 60 / 100, 50 / 100)
-
     # plot_data(train, validation, test, labels)
-
     naive_test = test
-
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
-    neural_network = dump_train(32 * 32, len(labels), train, validation, test, 700, 0.01, 2000)
+    # NEURAL NETWORK SETUP
+    hidden_layer_neurons = 700
+    alpha_rate = 0.01
+    epochs = 2000
 
+    # dummies
+    # neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, alpha_rate, epochs)
     # interactive(neural_network, alphabet)
-    naive_accuracy_test(neural_network, naive_test, False)
-    print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
+    # naive_accuracy_test(neural_network, naive_test, False)
+    # print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
     # naive_accuracy_test_from_drive(neural_network, alphabet, 1000,False)
 
-    # bias_variance_plot(32 * 32, len(labels), train, validation, test)
+    bias_variance_plot_debug(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, alpha_rate, epochs)
     # lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
     # epoch_plot(32 * 32, 700, len(labels), train, validation, test, 0.01, 2000)

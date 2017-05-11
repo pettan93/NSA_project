@@ -143,7 +143,7 @@ def dump_train(input_size, output_size, train, validation, test):
     return neural_net
 
 
-def naive_accuracy_test(neural_network, alphabet_number, samples):
+def naive_accuracy_test_from_drive(neural_network, alphabet_number, samples):
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
               'u',
               'v', 'w', 'x', 'y', 'z']
@@ -157,13 +157,26 @@ def naive_accuracy_test(neural_network, alphabet_number, samples):
         image_vector = image_to_vector(path)
         data = np.array(image_vector).reshape(1, 1024)
         indx = neural_network.feed_forward(data)
-        print(total,"[" + input_char + "] => [" + labels[indx[0]] + "]")
+        print(total, "[" + input_char + "] => [" + labels[indx[0]] + "]")
         total += 1
         if labels[indx[0]] is input_char:
             success += 1
         print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
 
 
+def naive_accuracy_test(neural_network, test_data):
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+              'u',
+              'v', 'w', 'x', 'y', 'z']
+    total = 0
+    success = 0
+    for entry in test_data:
+        indx = neural_network.feed_forward(np.array(entry["input"]).reshape(1, 1024))
+        print(total, "[" + entry["class"] + "] => [" + labels[indx[0]] + "]")
+        total += 1
+        if labels[indx[0]] is entry["class"]:
+            success += 1
+        print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
 
 
 def plot_data(train, validation, test, labels):
@@ -186,15 +199,25 @@ def plot_data(train, validation, test, labels):
 
     a_train = list()
     for l in labels:
-        a_train.append(d_train[l])
+        if l in d_train:
+            a_train.append(d_train[l])
+        else:
+            a_train.append(0)
 
     a_val = list()
     for l in labels:
-        a_val.append(d_validation[l])
+        if l in d_validation:
+            a_val.append(d_validation[l])
+        else:
+            a_val.append(0)
 
     a_test = list()
     for l in labels:
-        a_test.append(d_test[l])
+        if l in d_test:
+            a_test.append(d_test[l])
+        else:
+            a_test.append(0)
+
     # survived? gz
 
     import numpy as np
@@ -234,6 +257,7 @@ def plot_data(train, validation, test, labels):
 
 if __name__ == '__main__':
     from captcha_breaker import interactive
+
     input_data = []
     labels = []
     class_number = 0
@@ -263,15 +287,18 @@ if __name__ == '__main__':
 
     # plot_data(train, validation, test, labels)
 
+    naive_test = test
+
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
-    # bias_variance_plot(32 * 32, len(labels), train, validation, test)
-
     neural_network = dump_train(32 * 32, len(labels), train, validation, test)
-    # interactive(neural_network, alphabet)
-    naive_accuracy_test(neural_network, alphabet, 2000)
 
+    # interactive(neural_network, alphabet)
+    naive_accuracy_test(neural_network,naive_test)
+    # naive_accuracy_test_from_drive(neural_network, alphabet, 1000)
+
+    # bias_variance_plot(32 * 32, len(labels), train, validation, test)
     # lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
     # epoch_plot(32 * 32, 300, len(labels), train, validation, test, 0.001, 100000)

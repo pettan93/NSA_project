@@ -122,11 +122,11 @@ class MultilayerPerceptron:
 
 
         # Uložení naučené neuronky
-        import os
-        time_stamp = current_time()
-        path = os.path.join(os.getcwd(), time_stamp)
-        os.mkdir(path)
-        saver.save(self.session, os.path.join(path, "model.ckpt"))
+        # import os
+        # time_stamp = current_time()
+        # path = os.path.join(os.getcwd(), time_stamp)
+        # os.mkdir(path)
+        # saver.save(self.session, os.path.join(path, "model.ckpt"))
 
     def dump_train(self, training_set, learning_rate, validation_data, epochs):
         """

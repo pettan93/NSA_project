@@ -64,7 +64,7 @@ def split(input_data, train, test):
     return training_set, validation_set, test_set
 
 
-def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, test, training_length, softness=0.01):
+def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, test, epochs, softness=0.01, step=0.01, stop=1):
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
@@ -72,13 +72,14 @@ def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, t
     plt.xlabel("$\\lambda$")
     accuracy = []
     x_axis = []
-    for real_lambda in reversed(np.arange(softness, 1, softness)):
+    for real_lambda in reversed(np.arange(softness, stop, step
+                                          )):
         with MultilayerPerceptron(input_size, hidden_layer_size, output_size) as neural_net:
-            neural_net.train(train, real_lambda, validation, training_length)
+            neural_net.train(train, real_lambda, validation, epochs)
             accuracy.append(neural_net.accuracy(test))
             x_axis.append(real_lambda)
             plt.plot(x_axis, accuracy, 'b-')
-            plt.gca().invert_xaxis()
+            # plt.gca().invert_xaxis()
             plt.pause(0.00001)
     plt.ioff()
     input('Done')
@@ -101,6 +102,28 @@ def epoch_plot(input_size, hidden_layer_size, output_size, train, validation, te
             accuracy.append(acc)
             last_accuracy = acc
             x_axis.append(length)
+            plt.plot(x_axis, accuracy, 'b-')
+            plt.pause(0.00001)
+    plt.ioff()
+    print('Done, Last accuracy : ', last_accuracy, "%")
+    input("Press Enter to exit")
+
+def neural_plot(input_size, output_size, train, validation, epochs, learning_rate, starting_number_of_neurons, step, end_number_of_neurons):
+    from ML.MultilayerPerceptron import MultilayerPerceptron
+    import matplotlib.pyplot as plt
+    plt.ion()
+    plt.ylabel("Přesnost [%]")
+    plt.xlabel("Počet neuronů")
+    accuracy = []
+    x_axis = []
+    last_accuracy = None
+    for neurons in range(starting_number_of_neurons, end_number_of_neurons + 1, step):
+        with MultilayerPerceptron(input_size, neurons, output_size) as neural_net:
+            neural_net.train(train, learning_rate, validation, epochs)
+            acc = neural_net.accuracy(test)
+            accuracy.append(acc)
+            last_accuracy = acc
+            x_axis.append(neurons)
             plt.plot(x_axis, accuracy, 'b-')
             plt.pause(0.00001)
     plt.ioff()
@@ -274,7 +297,6 @@ def plot_data(train, validation, test, labels):
     plt.show()
 
 
-
 def bias_variance_plot_debug(input_size, output_size, train, validation, test, neurons, alpha_rate, epochs):
     from ML.MultilayerPerceptron import MultilayerPerceptron
     from ML import Batcher
@@ -293,11 +315,11 @@ def bias_variance_plot_debug(input_size, output_size, train, validation, test, n
     j_validation = []
     train_set = train
     batcher = Batcher.Batcher(train[0], train[1])
-    for training_percentage in range(10, 101, 5):
+    for training_percentage in range(10, 101, 10):
         with MultilayerPerceptron(input_size, neurons, output_size) as neural_net:
-            train = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
-            neural_net.train(train, alpha_rate, validation, epochs)
-            j_train.append(neural_net.j(test[0], test[1]))
+            # train_set = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
+            neural_net.train(train_set, alpha_rate, validation, epochs)
+            j_train.append(neural_net.j(train[0], train[1]))
             j_validation.append(neural_net.j(validation[0], validation[1]))
             # x_axis = list(range(len(j_train)))
             x_axis.append(training_percentage)
@@ -305,53 +327,65 @@ def bias_variance_plot_debug(input_size, output_size, train, validation, test, n
             plt.pause(0.00001)
     input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
 
+
 if __name__ == '__main__':
     import utils.unzip
-    utils.unzip.unzip_datasets()
+    from captcha_breaker import interactive
+
+    # utils.unzip.unzip_datasets()
     input_data = []
     labels = []
     class_number = 0
 
     alphabet = "alphabet_13"
     samples_limit = 100
+    # characters_limit = ['a','b','c']
+    characters_limit = []
 
     print("Načítám data")
     for size in ["lowercase"]:
         for folder in os.listdir("./resources/output/%s/%s" % (alphabet, size)):
-            labels.append(folder)
-            for i, sample in enumerate(os.listdir("./resources/output/%s/%s/%s" % (alphabet, size, folder))):
-                if i is samples_limit:
-                    break
-                input_data.append({
-                    "input": image_to_vector("./resources/output/%s/%s/%s/%s" % (alphabet, size, folder, sample)),
-                    "output": class_number,
-                    "class": folder
-                })
-            class_number += 1
+            if len(characters_limit) is 0 or folder in characters_limit:
+                labels.append(folder)
+                for i, sample in enumerate(os.listdir("./resources/output/%s/%s/%s" % (alphabet, size, folder))):
+                    if i is samples_limit:
+                        break
+                    input_data.append({
+                        "input": image_to_vector("./resources/output/%s/%s/%s/%s" % (alphabet, size, folder, sample)),
+                        "output": class_number,
+                        "class": folder
+                    })
+                class_number += 1
     print("Načetl jsem %s obrázků" % (len(input_data)))
     print("Počet labelů %s" % (len(labels)))
     print(labels)
     random.shuffle(input_data)
 
     train, validation, test = split(input_data, 60 / 100, 50 / 100)
+    # train, validation, test = split(input_data, 75 / 100, 50 / 100)
+
     # plot_data(train, validation, test, labels)
+
     naive_test = test
     train = prepare_for_neural_network(train)
     validation = prepare_for_neural_network(validation)
     test = prepare_for_neural_network(test)
 
     # NEURAL NETWORK SETUP
-    hidden_layer_neurons = 700
-    alpha_rate = 0.01
-    epochs = 2000
+    hidden_layer_neurons = 150
+    learing_rate = 0.004
+    epochs = 3000
 
     # dummies
-    # neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, alpha_rate, epochs)
-    # interactive(neural_network, alphabet)
-    # naive_accuracy_test(neural_network, naive_test, False)
-    # print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
+    neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate, epochs)
+    accuracy_test = naive_accuracy_test(neural_network, naive_test, False)
+    print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
+
+
     # naive_accuracy_test_from_drive(neural_network, alphabet, 1000,False)
 
-    bias_variance_plot_debug(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, alpha_rate, epochs)
-    # lambda_plot(32 * 32, 300, len(labels), train, validation, test, 10000)
-    # epoch_plot(32 * 32, 700, len(labels), train, validation, test, 0.01, 2000)
+    # bias_variance_plot_debug(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate, epochs)
+    # lambda_plot(32 * 32, hidden_layer_neurons, len(labels), train, validation, test, epochs, learing_rate, 0.001, 0.03)
+    # epoch_plot(32 * 32, hidden_layer_neurons, len(labels), train, validation, test, learing_rate, 10000)
+    # neural_plot(32 * 32, len(labels), train, validation, epochs, learing_rate, 10, 10, 1220)
+

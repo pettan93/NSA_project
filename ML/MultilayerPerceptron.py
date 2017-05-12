@@ -37,8 +37,10 @@ class MultilayerPerceptron:
             self.output_layer = tf.Variable(tf.random_normal([number_of_neurons, self.output_size]))
             # Bias pro skrytou vrstvu
             self.bias_1 = tf.Variable(tf.random_normal([number_of_neurons]))
+            # self.bias_1 = 1
             # Bias pro výstupní vrstvu
             self.bias_2 = tf.Variable(tf.random_normal([output_size]))
+            # self.bias_2 = 1
         if session is None:
             self.session = tf.InteractiveSession()
         else:
@@ -65,7 +67,7 @@ class MultilayerPerceptron:
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
         # Naše cost funkce
-        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        cross_entropy = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_, logits=feed_forward))
         return cross_entropy
 
     def j(self, input_data, y_data):
@@ -76,7 +78,7 @@ class MultilayerPerceptron:
         if evt.key == 'q':
             self.run = False
 
-    def train(self, training_set, learning_rate, validation_data, epochs, plot = False):
+    def train(self, training_set, learning_rate, validation_data, epochs, plot = True):
         """
         Trénování neuronové sítě
         :param training_set: trénovací množina
@@ -94,8 +96,8 @@ class MultilayerPerceptron:
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
         # Naše cost funkce
-        #   labels - co to ma predpovedet, logits - co to predpovida
-        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        #   onehot_labels - co to ma predpovedet, logits - co to predpovida
+        cross_entropy = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_, logits=feed_forward))
         # Samotná učení na jeden řádek dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
         saver = tf.train.Saver()
@@ -116,14 +118,14 @@ class MultilayerPerceptron:
         for i in range(epochs):
             training_set = batcher.next_batch(len(training_set))
             _, j = self.session.run([train_step, j_validation_tensor], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
-            if i % 1000 == 0 and plot:
+            if i % 10 == 0 and plot:
                 j_hist.append(j)
                 plt.plot(j_hist, "r-")
                 plt.pause(0.0000001)
             if not self.run:
                 break
 
-
+        input("Stiskentě pro ukončení")
         # Uložení naučené neuronky
         # import os
         # time_stamp = current_time()
@@ -149,8 +151,8 @@ class MultilayerPerceptron:
         feed_forward = tf.add(tf.matmul(hidden_output, self.output_layer), self.bias_2)
         # Konec feed forwardu máme předpověď
         # Naše cost funkce
-        #   labels - co to ma predpovedet, logits - co to predpovida
-        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=feed_forward))
+        #   onehot_labels - co to ma predpovedet, logits - co to predpovida
+        cross_entropy = tf.reduce_mean(tf.losses.softmax_cross_entropy(onehot_labels=y_, logits=feed_forward))
         # Samotná učení na jeden řádek dám mu learning rate a řeknu mu minimalizuj cost funkci a on to uděla :)
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
         saver = tf.train.Saver()

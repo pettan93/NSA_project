@@ -90,13 +90,10 @@ def break_captcha(path):
     """
     Interaktivni mod pro zkoušení klasifikace
     """
-def interactive(neural_network, alphabet_number):
+def interactive(neural_network, alphabet_number,labels,sample_number=False):
     import matplotlib.pyplot as plt
     import matplotlib.image as mpimg
 
-    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-              'u',
-              'v', 'w', 'x', 'y', 'z']
     input_char = raw_input("Jaký znak chcete klasifikovat?: ").strip().rstrip('\n')
 
     total = 0
@@ -107,10 +104,14 @@ def interactive(neural_network, alphabet_number):
             print("Není v datech, zkuste znovu.")
             input_char = raw_input("Jaký znak chcete klasifikovat?: ").strip().rstrip('\n')
 
-        path = random.choice(
-            os.listdir("./resources/output/%s/lowercase/%s" % (alphabet_number, input_char)))
-        path = "./resources/output/%s/lowercase/%s/" % (alphabet_number, input_char) + path
-        print("Nahodne vybrany vzorek znaku [" + input_char + "] - otevíram..")
+        if sample_number is False:
+            path = random.choice(
+                os.listdir("./resources/output/%s/lowercase/%s" % (alphabet_number, input_char)))
+            path = "./resources/output/%s/lowercase/%s/" % (alphabet_number, input_char) + path
+            print("Nahodne vybrany vzorek znaku [" + input_char + "] - otevíram..")
+        else:
+            input_sample = raw_input("Cislo vzorku?: ").strip().rstrip('\n')
+            path = "./resources/output/%s/lowercase/%s/%s.png" % (alphabet_number, input_char,input_sample)
 
         plt.imshow(mpimg.imread(path))
         plt.show(block=False)

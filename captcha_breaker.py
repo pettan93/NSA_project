@@ -57,14 +57,14 @@ def break_captcha(path):
     print("Neuronka chce přečíst násedující obrázek..")
     image.show()
 
-    box = Box(20, 0, 20, 32)
+    box = Box(0, 0, 32, 32)
     # labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     #  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
               'v', 'w', 'x', 'y', 'z']
     with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
         neural_network.load("./2017-05_21_01_02/model.ckpt")
-        while box.w_x < image.size[0] - 20:
+        while box.w_x < image.size[0] - 32:
             img_data = image.crop(box.tuple()).convert("LA").resize((32, 32))
             data = [x[0] for x in img_data.getdata()]
             matrix = np.matrix(data).reshape((32, 32))
@@ -80,16 +80,15 @@ def break_captcha(path):
             data_img = ImageOps.invert(data_img).resize((32, 32)).convert("LA")
             data_img.show()
             data = np.matrix([x[0] / 255 for x in data_img.getdata()])
-            print(data.shape)
 
             indx = neural_network.feed_forward(data)
             print("Neuronka vyhodnotila [" + labels[indx[0]] + "]")
-            box.x += 20
+            box.x += box.width
             input("enter pro další znak")
 
-    """
-    Interaktivni mod pro zkoušení klasifikace
-    """
+"""
+Interaktivni mod pro zkoušení klasifikace
+"""
 def interactive(neural_network, alphabet_number,labels,sample_number=False):
     import matplotlib.pyplot as plt
     import matplotlib.image as mpimg
@@ -138,9 +137,8 @@ def interactive(neural_network, alphabet_number,labels,sample_number=False):
 if __name__ == '__main__':
     # break_captcha("resources/output/alphabet_3/captcha3.png")
 
-    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-              'u',
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
               'v', 'w', 'x', 'y', 'z']
-    with MultilayerPerceptron(32 * 32, 300, len(labels)) as neural_network:
-        neural_network.load("./2017-05_21_53_46/model.ckpt")
+    with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
+        neural_network.load("./2017-05_21_01_02/model.ckpt")
         interactive(neural_network, 13)

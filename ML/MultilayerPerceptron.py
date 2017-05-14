@@ -78,7 +78,7 @@ class MultilayerPerceptron:
         if evt.key == 'q':
             self.run = False
 
-    def train(self, training_set, learning_rate, validation_data, epochs, plot = False):
+    def train(self, training_set, learning_rate, validation_data, epochs, plot):
         """
         Trénování neuronové sítě
         :param training_set: trénovací množina
@@ -112,7 +112,7 @@ class MultilayerPerceptron:
             # Při uzavření vykreslovacího okna zastavíme učení
             plt.connect('key_press_event', self.stop)
             plt.ylabel("J($\\theta$)")
-            plt.xlabel("epocha * 1000")
+            plt.xlabel("Počet epoch * 10")
         j_hist = []
         j_validation_tensor = self.j_tensor(validation_data[0], validation_data[1])
         for i in range(epochs):
@@ -120,11 +120,14 @@ class MultilayerPerceptron:
             _, j = self.session.run([train_step, j_validation_tensor], feed_dict={self.input_layer: training_set[0], y_: training_set[1]})
             if i % 10 == 0 and plot:
                 j_hist.append(j)
+                plt.title("Učící křivka")
                 plt.plot(j_hist, "r-")
                 plt.pause(0.0000001)
             if not self.run:
                 break
-
+        if plot:
+            print("Minmum J = ", j_hist[len(j_hist) - 1])
+            # input("Stiskente kvalesu")
         # input("Stiskentě pro ukončení")
         # Uložení naučené neuronky
         # import os

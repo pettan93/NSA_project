@@ -135,10 +135,10 @@ def interactive(neural_network, alphabet_number,labels,sample_number=False):
 
 
 if __name__ == '__main__':
-    # break_captcha("resources/output/alphabet_3/captcha3.png")
+    break_captcha("resources/output/alphabet_3/captcha3.png")
 
-    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
-              'v', 'w', 'x', 'y', 'z']
-    with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
-        neural_network.load("./2017-05_21_01_02/model.ckpt")
-        interactive(neural_network, 13)
+    # labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+    #           'v', 'w', 'x', 'y', 'z']
+    # with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
+    #     neural_network.load("./2017-05_21_01_02/model.ckpt")
+    #     interactive(neural_network, 13)

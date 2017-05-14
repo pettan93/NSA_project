@@ -64,7 +64,8 @@ def split(input_data, train, test):
     return training_set, validation_set, test_set
 
 
-def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, test, epochs, softness=0.01, step=0.01, stop=1):
+def lambda_plot(input_size, hidden_layer_size, output_size, train, validation, test, epochs, softness=0.01, step=0.01,
+                stop=1):
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
@@ -108,7 +109,9 @@ def epoch_plot(input_size, hidden_layer_size, output_size, train, validation, te
     print('Done, Last accuracy : ', last_accuracy, "%")
     input("Press Enter to exit")
 
-def neural_plot(input_size, output_size, train, validation, epochs, learning_rate, starting_number_of_neurons, step, end_number_of_neurons):
+
+def neural_plot(input_size, output_size, train, validation, epochs, learning_rate, starting_number_of_neurons, step,
+                end_number_of_neurons):
     from ML.MultilayerPerceptron import MultilayerPerceptron
     import matplotlib.pyplot as plt
     plt.ion()
@@ -221,6 +224,61 @@ def naive_accuracy_test(neural_network, test_data, verbose):
         print("Úspěšnost [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
 
 
+char_avg_dict = dict()
+
+
+def sep_char_test(neural_network, test_data, verbose):
+    labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+              'u',
+              'v', 'w', 'x', 'y', 'z']
+
+    if labels[0] not in char_avg_dict:
+        for l in labels:
+            char_avg_dict[l] = list()
+
+    for char in labels:
+        total = 0
+        success = 0
+        for entry in test_data:
+            print("neco delam..")
+            if entry["class"] is char:
+                indx = neural_network.feed_forward(np.array(entry["input"]).reshape(1, 1024))
+                if labels[indx[0]] is entry["class"]:
+                    success += 1
+                total += 1
+        char_avg_dict[char].append((success / total) * 100)
+        print("neco delam.")
+        # print("Úspěšnost pro písmeno ["+char+"] [" + str(success) + "/" + str(total) + "] - " + str((success / total) * 100) + " %")
+
+def print_char_avg_dict():
+    import matplotlib.pyplot as plt
+    chars = list()
+    presnotsti = list()
+
+    for char in char_avg_dict.keys():
+        chars.append(char)
+        sum = 0
+        for u in char_avg_dict[char]:
+            sum += u
+        print(char_avg_dict[char])
+        print("Prumerna uspesnost pro ", char, " je ", str(sum / len(char_avg_dict[char])))
+        presnotsti.append(sum / len(char_avg_dict[char]))
+
+    plt.rcdefaults()
+    fig, ax = plt.subplots()
+
+    y_pos = np.arange(len(chars))
+
+    ax.barh(y_pos, presnotsti, align='center',
+            color='green', ecolor='black')
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(chars)
+    ax.invert_yaxis()  # labels read top-to-bottom
+    ax.set_xlabel('Přesnost [%]')
+    ax.set_title('Úspěšnost klasifikace na jednotlivých znacích')
+    plt.show()
+
+
 def plot_data(train, validation, test, labels):
     # what the hell, piece of the most ineffective code in galaxy starts here..
     d_train = dict()
@@ -296,36 +354,64 @@ def plot_data(train, validation, test, labels):
     autolabel(rects3)
     plt.show()
 
-
-def bias_variance_plot_debug(input_size, output_size, train, validation, test, neurons, alpha_rate, epochs):
-    from ML.MultilayerPerceptron import MultilayerPerceptron
-    from ML import Batcher
+def number_of_samples_plot(train,validation,test):
     import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
-    j_train_label = mpatches.Patch(color='red', label='$j_{trenovaci}$')
-    j_validation_label = mpatches.Patch(color='blue', label='$j_{validace}$')
-    plt.ion()
-    plt.ylabel("J($\\theta$)")
-    plt.xlabel("Zpracováno vozorků [%] ")
-    plt.legend(handles=[j_train_label, j_validation_label])
+    res1 = list()
+    res2 = list()
 
-    x_axis = []
+    for samples in range(50, 550, 50):
+        newtrain_naive_test = naive_test[:samples]
+        newtrain = train[0][:samples]
+        # # neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate,
+        # #                             epochs)
+        # succes = neural_network.accuracy(test)
+        succes = random.randint(0, 100)
 
-    j_train = []
-    j_validation = []
-    train_set = train
-    batcher = Batcher.Batcher(train[0], train[1])
-    for training_percentage in range(10, 101, 10):
-        with MultilayerPerceptron(input_size, neurons, output_size) as neural_net:
-            # train_set = batcher.next_batch(int(len(train_set[0]) * (training_percentage / 100)))
-            neural_net.train(train_set, alpha_rate, validation, epochs)
-            j_train.append(neural_net.j(train[0], train[1]))
-            j_validation.append(neural_net.j(validation[0], validation[1]))
-            # x_axis = list(range(len(j_train)))
-            x_axis.append(training_percentage)
-            plt.plot(x_axis, j_train, 'r-', x_axis, j_validation, 'b-')
-            plt.pause(0.00001)
-    input("Konec analýzy pro pokračování stiskněte jakoukoliv klávesu")
+        entry = dict()
+        entry["samples"] = samples
+        entry["succes"] = succes
+        res1.append(entry)
+
+    for samples in range(1000, 5500, 500):
+        newtrain_naive_test = naive_test[:samples]
+        newtrain = train[0][:samples]
+        # neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate,
+        #                             epochs)
+        # succes = neural_network.accuracy(test)
+        succes = random.randint(0, 100)
+
+        entry = dict()
+        entry["samples"] = samples
+        entry["succes"] = succes
+        res2.append(entry)
+
+    x1 = []
+    y1 = []
+    x2 = []
+    y2 = []
+    for r in res1:
+        x1.append(r["samples"])
+        y1.append(r["succes"])
+        print(r["samples"],r["succes"])
+    for r in res2:
+        x2.append(r["samples"])
+        y2.append(r["succes"])
+        print(r["samples"],r["succes"])
+
+    plt.plot(x1,y1)
+    plt.ylabel("Přesnost na testovací množině [%]")
+    plt.xlabel("Velikost trénovací množiny [počet obrázků]")
+    plt.show()
+
+    plt.plot(x2,y2)
+    plt.ylabel("Přesnost na testovací množině [%]")
+    plt.xlabel("Velikost trénovací množiny [počet obrázků]")
+    plt.show()
+
+    input()
+
+
 
 
 if __name__ == '__main__':
@@ -377,15 +463,26 @@ if __name__ == '__main__':
     epochs = 3000
 
     # dummies
-    neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate, epochs)
-    accuracy_test = naive_accuracy_test(neural_network, naive_test, False)
-    print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
+    # neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate, epochs)
+
+    # Uspesnot na ruznych pismenech
+    # for i in range(5):
+    #     neural_network = dump_train(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate, epochs)
+    #     sep_char_test(neural_network, naive_test, True)
+    # print_char_avg_dict()
 
 
-    # naive_accuracy_test_from_drive(neural_network, alphabet, 1000,False)
+
+    number_of_samples_plot(train,validation,test)
+
+
+
+    # accuracy_test = naive_accuracy_test(neural_network, naive_test, False)
+    # print("Přenost dle tensorflow: ", neural_network.accuracy(test)," %")
+
+
 
     # bias_variance_plot_debug(32 * 32, len(labels), train, validation, test, hidden_layer_neurons, learing_rate, epochs)
     # lambda_plot(32 * 32, hidden_layer_neurons, len(labels), train, validation, test, epochs, learing_rate, 0.001, 0.03)
     # epoch_plot(32 * 32, hidden_layer_neurons, len(labels), train, validation, test, learing_rate, 10000)
     # neural_plot(32 * 32, len(labels), train, validation, epochs, learing_rate, 10, 10, 1220)
-

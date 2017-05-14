@@ -78,7 +78,7 @@ class MultilayerPerceptron:
         if evt.key == 'q':
             self.run = False
 
-    def train(self, training_set, learning_rate, validation_data, epochs, plot = True):
+    def train(self, training_set, learning_rate, validation_data, epochs, plot = False):
         """
         Trénování neuronové sítě
         :param training_set: trénovací množina
@@ -125,7 +125,7 @@ class MultilayerPerceptron:
             if not self.run:
                 break
 
-        input("Stiskentě pro ukončení")
+        # input("Stiskentě pro ukončení")
         # Uložení naučené neuronky
         # import os
         # time_stamp = current_time()

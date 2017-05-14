@@ -13,7 +13,7 @@ from PIL import Image, ImageOps
 # from skimage.feature import corner_harris, corner_subpix, corner_peaks
 import numpy as np
 
-from main import image_to_vector
+from main import image_to_vector, image_to_vector2
 
 
 class Box:
@@ -55,36 +55,42 @@ import numpy as np
 def break_captcha(path):
     image = Image.open(path)
     print("Neuronka chce přečíst násedující obrázek..")
-    image.show()
+    # image.show()
 
+    neuronka_text = ""
     box = Box(0, 0, 32, 32)
-    # labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    #  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
               'v', 'w', 'x', 'y', 'z']
-    with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
-        neural_network.load("./2017-05_21_01_02/model.ckpt")
-        while box.w_x < image.size[0] - 32:
-            img_data = image.crop(box.tuple()).convert("LA").resize((32, 32))
-            data = [x[0] for x in img_data.getdata()]
-            matrix = np.matrix(data).reshape((32, 32))
-            matrix = remove_borders(matrix)
-            if matrix is None:
-                box.x += 20
-                continue
-            array = np.asarray(matrix, dtype=np.uint8)
-            data_img = Image.fromarray(array)
-            if data_img.size[0] < 10 or data_img.size[1] < 10:
-                box.x += 20
-                continue
-            data_img = ImageOps.invert(data_img).resize((32, 32)).convert("LA")
-            data_img.show()
-            data = np.matrix([x[0] / 255 for x in data_img.getdata()])
+    with MultilayerPerceptron(32 * 32, 170, len(labels)) as neural_network:
+        neural_network.load("./2017-05_23_46_16/model.ckpt")
+        while box.w_x < image.size[0]:
+            img_data = image.crop(box.tuple()).convert("L").resize((32, 32))
+
+            # img_data.show()
+            # data = [x[0] for x in img_data.getdata()]
+            # matrix = np.matrix(data).reshape((32, 32))
+            # matrix = remove_borders(matrix)
+            # if matrix is None:
+            #     box.x += 32
+            #     continue
+
+            # array = np.asarray(matrix, dtype=np.uint8)
+            # data_img = Image.fromarray(array)
+            # data_img = ImageOps.invert(data_img).resize((32, 32)).convert("LA")
+            # data_img.show()
+            # data = np.matrix([x[0] / 255 for x in data_img.getdata()])
+
+            image_vector = image_to_vector2(img_data)
+            data = np.array(image_vector).reshape(1, 1024)
 
             indx = neural_network.feed_forward(data)
             print("Neuronka vyhodnotila [" + labels[indx[0]] + "]")
             box.x += box.width
-            input("enter pro další znak")
+            # input("enter pro další znak")
+            neuronka_text = neuronka_text + labels[indx[0]]
+
+    print(neuronka_text)
+
 
 """
 Interaktivni mod pro zkoušení klasifikace
@@ -105,12 +111,12 @@ def interactive(neural_network, alphabet_number,labels,sample_number=False):
 
         if sample_number is False:
             path = random.choice(
-                os.listdir("./resources/output/%s/lowercase/%s" % (alphabet_number, input_char)))
-            path = "./resources/output/%s/lowercase/%s/" % (alphabet_number, input_char) + path
+                os.listdir("./resources/output/alphabet_%s/lowercase/%s" % (alphabet_number, input_char)))
+            path = "./resources/output/alphabet_%s/lowercase/%s/" % (alphabet_number, input_char) + path
             print("Nahodne vybrany vzorek znaku [" + input_char + "] - otevíram..")
         else:
             input_sample = raw_input("Cislo vzorku?: ").strip().rstrip('\n')
-            path = "./resources/output/%s/lowercase/%s/%s.png" % (alphabet_number, input_char,input_sample)
+            path = "./resources/output/alphabet_%s/lowercase/%s/%s.png" % (alphabet_number, input_char,input_sample)
 
         plt.imshow(mpimg.imread(path))
         plt.show(block=False)
@@ -133,12 +139,11 @@ def interactive(neural_network, alphabet_number,labels,sample_number=False):
 
 
 
-
 if __name__ == '__main__':
-    break_captcha("resources/output/alphabet_3/captcha3.png")
+    break_captcha("resources/output/alphabet_3/captcha8.png")
 
     # labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
     #           'v', 'w', 'x', 'y', 'z']
-    # with MultilayerPerceptron(32 * 32, 200, len(labels)) as neural_network:
-    #     neural_network.load("./2017-05_21_01_02/model.ckpt")
-    #     interactive(neural_network, 13)
+    # with MultilayerPerceptron(32 * 32, 170, len(labels)) as neural_network:
+    #     neural_network.load("./2017-05_23_46_16/model.ckpt")
+    #     interactive(neural_network, 13,labels)

@@ -29,6 +29,19 @@ def image_to_vector(path):
     data = [(255 - x) / 255 for x in data_img.getdata()]
     return data
 
+def image_to_vector2(img):
+    """
+    Převede obrázek na vektor o velikosti vyska*sirka.
+    :param path: cesta k obrázku
+    :return:
+    """
+    data = np.array(img)
+    data = remove_borders(data)
+    data_img = Image.fromarray(data)
+    data_img = data_img.resize((32, 32))
+    data = [(255 - x) / 255 for x in data_img.getdata()]
+    return data
+
 
 def one_hot(x, max_size):
     """
@@ -471,9 +484,8 @@ if __name__ == '__main__':
     class_number = 0
 
     # alphabet = "alphabet_1"
-    alphabet = "alphabet_1"
-    # samples_limit = 100
-    samples_limit = 270
+    alphabet = "alphabet_13"
+    samples_limit = 260
     # characters_limit = ['a','b','c']
     characters_limit = []
 
@@ -508,9 +520,12 @@ if __name__ == '__main__':
     test = prepare_for_neural_network(test)
 
     # NEURAL NETWORK SETUP
-    hidden_layer_neurons = 150
+    hidden_layer_neurons = 170
     learing_rate = 0.00326
     epochs = 3000
+
+
+
 
     # number_of_samples_plot(input_data,hidden_layer_neurons,learing_rate,epochs)
 
